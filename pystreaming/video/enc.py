@@ -3,11 +3,10 @@ import numpy as np
 import zmq
 import multiprocessing as mp
 from functools import partial
-from pystreaming.listlib.circularlist import CircularList
-from pystreaming.video.interface import recv_ndarray_idx, send_ndarray_idx
+import pystreaming.video.interface as intf
 
 
-def ps(shutdown, infd, outfd, rcvhwm, outhwm):
+def enc_ps(shutdown, infd, outfd, rcvhwm, outhwm):
     context = zmq.Context()
     socket = context.socket(zmq.PULL)
     socket.setsockopt(zmq.RCVHWM, rcvhwm)
@@ -23,13 +22,14 @@ def ps(shutdown, infd, outfd, rcvhwm, outhwm):
     while not shutdown.is_set():
         if poller.poll(0):
             try:
-                arr, idx = recv_ndarray_idx(socket, flags=zmq.NOBLOCK)
-                out.send(encoder(arr), copy=False, flags=zmq.SNDMORE|zmq.NOBLOCK)
-                out.send_pyobj(idx)
-                print(f"ENC: idx={idx}")
+                arr, idx = intf.recv_ndarray_idx(socket, flags=zmq.NOBLOCK)
+                intf.send_buf_idx(socket, encoder(arr), idx, flags=zmq.NOBLOCK)
             except zmq.exception.Again:
-                # ignore 
+                # ignore send misses to distributor.
+                # Should not happen if there is a distributor.
+                # Could implement a signal that there is a distributor. Not strictly necessary tho.
                 pass
+
 
 class Encoder:
     infd = "ipc:///tmp/encin"
@@ -40,6 +40,12 @@ class Encoder:
     def __init__(self, context, procs=2):
         self.context, self.procs = context, procs
         self.shutdown = mp.Event()
+        self.psargs = (
+            self.infd,
+            self.outfd,
+            self.rcvhwm,
+            self.outhwm,
+        )
         self.workers = []
         self.idx = 0
 
@@ -51,7 +57,7 @@ class Encoder:
         if self.workers == []:
             raise RuntimeError("Tried to send frame to stopped Encoder")
         try:
-            send_ndarray_idx(self.sender, frame, self.idx, flags=zmq.NOBLOCK)
+            intf.send_ndarray_idx(self.sender, frame, self.idx, flags=zmq.NOBLOCK)
         except zmq.error.Again:
             raise RuntimeError("Worker processes are not processing frames fast enough")
         # change behavior to:
@@ -62,7 +68,12 @@ class Encoder:
         if self.workers != []:
             raise RuntimeError("Tried to start running Encoder")
         for _ in range(self.procs):
-            self.workers.append(mp.Process(target=ps, args=(self.shutdown, self.infd, self.outfd)))
+            self.workers.append(
+                mp.Process(
+                    target=enc_ps,
+                    args=self.psargs,
+                )
+            )
 
         for ps in self.workers:
             ps.daemon = True

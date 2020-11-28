@@ -147,32 +147,6 @@ class UltraJPGEnc:
         self.workers = []
         self.shutdown.clear()
 
-class Distributor:
-    infd = "ipc:///tmp/encout"
-    def __init__(self, endpoint):
-        self.endpoint = endpoint
-        self.shutdown = mp.Event()
-        self.ps = None
-    
-    def start(self):
-        if self.ps is not None:
-            raise RuntimeError("Tried to start a runnning Distributor obj")
-
-        self.ps = mp.Process(
-            target=distributor,
-            args=(self.shutdown, self.infd, self.endpoint),
-        )
-        self.ps.daemon = True
-        self.ps.start()
-
-    def stop(self):
-        if self.ps is None:
-            raise RuntimeError("Tried to stop a stopped Distributor obj")
-        self.shutdown.set()
-        self.ps.join()
-        self.ps = None
-        self.shutdown.clear()   
-
 class AIOREQ:
     outfd = "ipc:///tmp/decin"
     def __init__(self, source, procs=3):

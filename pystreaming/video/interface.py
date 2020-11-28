@@ -49,3 +49,18 @@ def send_buf_idx(socket, buf, idx, flags=0):
     """
     socket.send(buf, copy=False, flags=zmq.SNDMORE|flags)
     socket.send_pyobj(idx, flags=flags)
+
+def recv_buf_idx(socket, flags=0):
+    """Receive a buffer and an index.
+
+    Args:
+        socket (zmq.Context.socket): Socket through which to receive data.
+        flags (int, optional): Zmq flags to execute with 
+            (only zmq.NOBLOCK or zmq.SNDMORE). Defaults to 0.
+
+    Returns:
+        [tuple(bytes, int)]: Buffer and index received.
+    """
+    buf = socket.recv(copy=False, flags=flags)
+    idx = socket.recv_pyobj(flags=flags)
+    return buf, idx
