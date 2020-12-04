@@ -1,6 +1,6 @@
 from turbojpeg import TurboJPEG, TJSAMP_420, TJFLAG_FASTDCT, TJFLAG_FASTUPSAMPLE
 import numpy as np
-import zmq
+import zmq, time
 import multiprocessing as mp
 from functools import partial
 import pystreaming.video.interface as intf
@@ -20,6 +20,7 @@ def enc_ps(shutdown, infd, outfd, rcvhwm, outhwm):
         TurboJPEG().encode, quality=70, jpeg_subsample=TJSAMP_420, flags=TJFLAG_FASTDCT
     )
     while not shutdown.is_set():
+        time.sleep(0.01)  # 100 cycles/sec
         if poller.poll(0):
             try:
                 arr, idx = intf.recv_ndarray_idx(socket, flags=zmq.NOBLOCK)
