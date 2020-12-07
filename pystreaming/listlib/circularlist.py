@@ -2,16 +2,17 @@ from threading import Lock
 from collections import OrderedDict
 from orderedset import OrderedSet
 
+
 class Empty(Exception):
-    """Raised when trying to pop from an empty queue
-    """
+    """Raised when trying to pop from an empty queue"""
+
     def __init__(self, calltype):
         super().__init__(f"Tried to pop from an empty {calltype}")
-        
+
 
 class CircularList:
-    """Fixed size list with push-overwrite capabilities.
-    """
+    """Fixed size list with push-overwrite capabilities."""
+
     def __init__(self, maxsize=10):
         """Initialize a Circular List with maximum size.
 
@@ -20,8 +21,8 @@ class CircularList:
             can store before it begins to overwrite old elements.
             Defaults to 10.
         """
-        self._front = 0 # inclusive
-        self._back = 0 # exclusive
+        self._front = 0  # inclusive
+        self._back = 0  # exclusive
         self.size = 0
 
         self.maxsize = maxsize
@@ -62,7 +63,7 @@ class CircularList:
 
     def __len__(self):
         return self.size
-    
+
     def __getitem__(self, idx):
         """Gets the nth element of the list.
         Elements at the front of the list (would be popped off) are at index 0.
@@ -103,7 +104,9 @@ class CircularList:
         """
         return self.size == self.maxsize
 
-# Classes below are either unneeded or not updated
+
+# Classes below are either unneeded or need to be updated.
+
 
 class BufferedCList(CircularList):
     """Subclass of CircularList that introduces the concept of a frame buffer"""

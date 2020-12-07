@@ -73,14 +73,16 @@ def distributor(shutdown, infd, endpoint):
     queues = {}
     while not shutdown.is_set():
         if collector.poll(0):  # returns 0 if no event, something else if there is
-            buf = collector.recv() # get buf
-            idx = collector.recv_pyobj() # then get idx
-            queue.push((buf, idx)) # add to queue
-        if distributor.poll(0): # got frame req
+            buf = collector.recv()  # get buf
+            idx = collector.recv_pyobj()  # then get idx
+            queue.push((buf, idx))  # add to queue
+        if distributor.poll(0):  # got frame req
             _ = distributor.recv()
             package = queue.pop()
             buf, idx = (b"nil", -1) if package is None else package
-            distributor.send(buf, copy=False, flags=zmq.SNDMORE) # send out buf, the idx
+            distributor.send(
+                buf, copy=False, flags=zmq.SNDMORE
+            )  # send out buf, the idx
             distributor.send_pyobj(idx)
 
 
@@ -98,6 +100,7 @@ async def aioreq(context, source, shutdown, drain):
         await drain.send(buf, copy=False, flags=zmq.SNDMORE)
         await drain.send_pyobj(idx)
 
+
 def aiomain(source, outfd, procs, shutdown):
     context = zmq.asyncio.Context()
     drain = context.socket(zmq.PUSH)
@@ -105,6 +108,7 @@ def aiomain(source, outfd, procs, shutdown):
     args = [aioreq(context, source, shutdown, drain) for _ in range(procs)]
     loop = asyncio.get_event_loop()
     loop.run_until_complete(asyncio.gather(*args))
+
 
 class UltraJPGEnc:
     infd = "ipc:///tmp/encin"
@@ -147,8 +151,10 @@ class UltraJPGEnc:
         self.workers = []
         self.shutdown.clear()
 
+
 class AIOREQ:
     outfd = "ipc:///tmp/decin"
+
     def __init__(self, source, procs=3):
         self.source, self.procs = source, procs
         self.shutdown = mp.Event()
@@ -173,6 +179,7 @@ class AIOREQ:
         self.ps = None
         self.shutdown.clear()
 
+
 class UltraJPGDec:
     infd = "ipc:///tmp/decin"
     outfd = "ipc:///tmp/decout"
@@ -181,7 +188,7 @@ class UltraJPGDec:
         self.context, self.procs = context, procs
         self.shutdown = mp.Event()
         self.workers = []
-        
+
         self.receiver = self.context.socket(zmq.PULL)
         self.receiver.bind(self.outfd)
 
@@ -213,34 +220,40 @@ class UltraJPGDec:
         self.shutdown.clear()
         self.running = False
 
+
 class Sequencer:
     infd1
 
+
 class VideoPlayer:
     infd = "ipc:///tmp/sequenced"
+
     def play(self, context):
         socket = context.socket(zmq.SUB)
         socket.connect(self.infd)
         while True:
             id, frame, _ = socket.recv
             print(f"\r frame: {idx}", end="")
-            cv2.imshow('mpjpeg.VideoPlayer', frame)
-            if cv2.waitKey(1): 
+            cv2.imshow("mpjpeg.VideoPlayer", frame)
+            if cv2.waitKey(1):
                 break
-        cv2.destroyAllWindows() 
-        
+        cv2.destroyAllWindows()
+
+
 class VideoWriter:
     ...
 
-# STREAM # cam =frame> ENC =buf,idx> DIS =buf,idx> 
+
+# STREAM # cam =frame> ENC =buf,idx> DIS =buf,idx>
 
 # WORKER # =buf,idx> AIOREQ =buf,idx> DEC =frame,idx> func =res,idx> PUSH =res,idx>
 
-# COLLEX # =res,idx> PULL =(resout)res,idx> 
-# COLLEX # =buf,idx> AIOREQ =buf,idx> DEC =(decout)frame,idx> 
-# COLLEX # =res,frame,idx> SEQ =(sequenced)res,frame,idx> 
+# COLLEX # =res,idx> PULL =(resout)res,idx>
+# COLLEX # =buf,idx> AIOREQ =buf,idx> DEC =(decout)frame,idx>
+# COLLEX # =res,frame,idx> SEQ =(sequenced)res,frame,idx>
 # COLLEX # =res,frame,idx> Filewriter
 # COLLEX # =res,frame,idx> VideoPlayer
+
 
 def encdistmain():
     frame = cv2.imread("pystreaming/pycodec/test_imgs/1280x720.jpg")
@@ -251,14 +264,14 @@ def encdistmain():
     dist.start()
     for i in range(100):
         print(i)
-        time.sleep(.5)
+        time.sleep(0.5)
         bank.tell(frame)
     print("call1")
     bank.stop_workers()
     print("call2")
     dist.stop()
-    
-    
+
+
 if __name__ == "__main__":
     encdistmain()
     # context = zmq.Context()

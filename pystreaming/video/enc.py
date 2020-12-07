@@ -7,6 +7,7 @@ import pystreaming.video.interface as intf
 
 
 def enc_ps(shutdown, infd, outfd, rcvhwm, outhwm):
+    print("Starting Encoder")
     context = zmq.Context()
     socket = context.socket(zmq.PULL)
     socket.setsockopt(zmq.RCVHWM, rcvhwm)
@@ -30,6 +31,7 @@ def enc_ps(shutdown, infd, outfd, rcvhwm, outhwm):
                 # Should not happen if there is a distributor.
                 # Could implement a signal that there is a distributor. Not strictly necessary tho.
                 pass
+    print("Stopping Encoder")
 
 
 class Encoder:
@@ -42,6 +44,7 @@ class Encoder:
         self.context, self.procs = context, procs
         self.shutdown = mp.Event()
         self.psargs = (
+            self.shutdown,
             self.infd,
             self.outfd,
             self.rcvhwm,
@@ -51,7 +54,7 @@ class Encoder:
         self.idx = 0
 
         self.sender = self.context.socket(zmq.PUSH)
-        self.sender.set_sockopt(zmq.SNDHWM, self.sndhwm)
+        self.sender.setsockopt(zmq.SNDHWM, self.tellhwm)
         self.sender.bind(self.infd)
 
     def send(self, frame):
@@ -65,7 +68,7 @@ class Encoder:
         # IF working, but slow, print a warning
         # If not responding, only then raise runtime error
 
-    def start_workers(self):
+    def start(self):
         if self.workers != []:
             raise RuntimeError("Tried to start running Encoder")
         for _ in range(self.procs):
@@ -80,9 +83,9 @@ class Encoder:
             ps.daemon = True
             ps.start()
 
-    def stop_workers(self):
+    def stop(self):
         if self.workers == []:
-            raise RuntimeError("Tried to stop stopped Encoder")
+            raise RuntimeError("Tried to stop stopped Encode")
 
         self.shutdown.set()
         for ps in self.workers:

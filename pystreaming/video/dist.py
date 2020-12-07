@@ -8,6 +8,7 @@ from pystreaming.listlib.circularlist import CircularList, Empty
 
 
 def dist_ps(shutdown, infd, endpt, rcvhwm, tracks):
+    print(f"Start Distributing to {endpt}")
     context = zmq.Context()
     collector = context.socket(zmq.PULL)
     collector.setsockopt(zmq.RCVHWM, rcvhwm)
@@ -30,6 +31,8 @@ def dist_ps(shutdown, infd, endpt, rcvhwm, tracks):
                 intf.send_buf_idx(distributor, buf, idx, flags=zmq.NODELAY)
             except (KeyError, Empty):  # no frames available or wrong track selected
                 intf.send_buf_idx(distributor, b"nil", -1, flags=zmq.NODELAY)
+    
+    print("Distributor stopped")
 
 
 class Distributor:
@@ -39,7 +42,7 @@ class Distributor:
     def __init__(self, endpoint, tracks=None):
         self.shutdown = mp.Event()
         self.ps = None
-        self.psargs = (self.shutdown, self.infd, endpoint, self.rcvhwm)
+        self.psargs = (self.shutdown, self.infd, endpoint, self.rcvhwm, tracks)
 
     def start(self):
         if self.ps is not None:
