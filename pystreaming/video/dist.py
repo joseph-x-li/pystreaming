@@ -31,7 +31,7 @@ def dist_ps(shutdown, infd, endpt, rcvhwm, tracks):
                 intf.send_buf_idx(distributor, buf, idx, flags=zmq.NODELAY)
             except (KeyError, Empty):  # no frames available or wrong track selected
                 intf.send_buf_idx(distributor, b"nil", -1, flags=zmq.NODELAY)
-    
+
     print("Distributor stopped")
 
 

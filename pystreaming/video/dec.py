@@ -1,65 +1,65 @@
 from turbojpeg import TurboJPEG, TJFLAG_FASTDCT, TJFLAG_FASTUPSAMPLE
-import zmq
+import zmq, time
 from functools import partial
 import pystreaming.video.interface as intf
 import multiprocessing as mp
 
-# Status: Not loop optimized
 
-def dec_ps(shutdown, infd, outfd):
+def dec_ps(shutdown, infd, outfd, rcvhwm, outhwm):
+    print("Starting Decoder")
     context = zmq.Context()
     socket = context.socket(zmq.PULL)
+    socket.setsockopt(zmq.RCVHWM, rcvhwm)
     socket.connect(infd)
     out = context.socket(zmq.PUSH)
+    out.setsockopt(zmq.SNDHWM, outhwm)
     out.connect(outfd)
     poller = zmq.Poller()
     poller.register(socket, zmq.POLLIN)
     decoder = partial(TurboJPEG().decode, flags=(TJFLAG_FASTDCT + TJFLAG_FASTUPSAMPLE))
 
     while not shutdown.is_set():
+        time.sleep(0.01)  # 100 cycles a sec
         if poller.poll(0):
-            buf = socket.recv()
-            idx = socket.recv_pyobj()
-            frame = decoder(buf)
-            send_ndarray_idx(frame, out, idx)
+            buf, idx = intf.recv_buf_idx(socket, flags=zmq.NOBLOCK)
+            intf.send_ndarray_idx(out, decoder(buf), idx, flags=zmq.NOBLOCK)
+    
+    print("Stopping Decoder")
 
 
-class UltraJPGDec:
+class Decoder:
     infd = "ipc:///tmp/decin"
     outfd = "ipc:///tmp/decout"
+    hearhwm = 30
+    rcvhwm = outhwm = 10
 
     def __init__(self, context, procs=2):
         self.context, self.procs = context, procs
         self.shutdown = mp.Event()
+        self.psargs = (self.shutdown, self.infd, self.outfd, self.rcvhwm, self.outhwm)
         self.workers = []
 
         self.receiver = self.context.socket(zmq.PULL)
         self.receiver.bind(self.outfd)
 
-    def hear(self):  # returns frame, idx
-        return recv_ndarray_idx(self.receiver)
+    def get_listener(self):
+        return self.receiver
 
-    def start_workers(self):
+    def start(self):
         if self.workers != []:
-            print("Warning: tried to start a running jpg decoder bank... Ignoring")
-            return
-
+            raise RuntimeError("Tried to start running Decoder")
         for _ in range(self.procs):
-            self.workers.append(
-                mp.Process(target=dec_ps, args=(self.shutdown, self.infd, self.outfd))
-            )
+            self.workers.append(mp.Process(target=dec_ps, args=self.psargs))
         for ps in self.workers:
             ps.daemon = True
             ps.start()
 
-    def stop_workers(self):
+    def stop(self):
         if self.workers == []:
-            print("Warning: tried to stop a stopped jpg decoder bank... Ignoring")
-            return
+            raise RuntimeError("Tried to stop stopped Decoder")
 
         self.shutdown.set()
         for ps in self.workers:
             ps.join()
         self.workers = []
         self.shutdown.clear()
-        self.running = False

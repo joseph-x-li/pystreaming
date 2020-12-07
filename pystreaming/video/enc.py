@@ -43,13 +43,7 @@ class Encoder:
     def __init__(self, context, procs=2):
         self.context, self.procs = context, procs
         self.shutdown = mp.Event()
-        self.psargs = (
-            self.shutdown,
-            self.infd,
-            self.outfd,
-            self.rcvhwm,
-            self.outhwm,
-        )
+        self.psargs = (self.shutdown, self.infd, self.outfd, self.rcvhwm, self.outhwm)
         self.workers = []
         self.idx = 0
 
@@ -72,12 +66,7 @@ class Encoder:
         if self.workers != []:
             raise RuntimeError("Tried to start running Encoder")
         for _ in range(self.procs):
-            self.workers.append(
-                mp.Process(
-                    target=enc_ps,
-                    args=self.psargs,
-                )
-            )
+            self.workers.append(mp.Process(target=enc_ps, args=self.psargs))
 
         for ps in self.workers:
             ps.daemon = True
