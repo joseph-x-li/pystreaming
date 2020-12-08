@@ -2,7 +2,10 @@ from turbojpeg import TurboJPEG, TJSAMP_420, TJFLAG_FASTDCT, TJFLAG_FASTUPSAMPLE
 import numpy as np
 import zmq, time
 import multiprocessing as mp
+from PIL import Image
 from functools import partial
+from itertools import count
+from pystreaming.video.testimages.imageloader import loadimage
 import pystreaming.video.interface as intf
 
 
@@ -76,6 +79,11 @@ class Encoder:
         time.sleep(1)  # Allow workers to spin up
 
     def stop(self):
+        """Stop a pool of encoders.
+
+        Raises:
+            RuntimeError: Raised when the Encoder is already stopped
+        """
         if self.workers == []:
             raise RuntimeError("Tried to stop stopped Encoder")
 
@@ -84,3 +92,17 @@ class Encoder:
             ps.join()
         self.workers = []
         self.shutdown.clear()
+
+    def _testcard(self, cardenum, animated=False):
+        testimage = loadimage(cardenum)
+        if self.workers == []:
+            self.start()
+        if animated:
+            storage = []
+            for ang in range(360):
+                storage.append(np.asarray(testimage.rotate(ang)))
+        else:
+            storage = np.asarray(testimage)
+        for i in count():
+            self.send(storage[i % 360] if animated else storage)
+            time.sleep(1 / 30)

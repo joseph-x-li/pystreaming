@@ -38,15 +38,16 @@ def encdistmain(cam):
     dist = stream.Distributor("tcp://*:5553")
     bank.start()
     dist.start()
-    start = time.time()
-    for i in range(n):
-        print(i)
-        bank.send(cam.read()[1])
-        time.sleep(1/30)
-    print(f"Did {n} frames in {time.time() - start}, fps = {n / (time.time() - start)}")
-    print("STOPPING")
-    bank.stop_workers()
-    dist.stop()
+    bank._testcard()
+    # start = time.time()
+    # for i in range(n):
+    #     print(i)
+    #     bank.send(cam.read()[1])
+    #     time.sleep(1/30)
+    # print(f"Did {n} frames in {time.time() - start}, fps = {n / (time.time() - start)}")
+    # print("STOPPING")
+    # bank.stop_workers()
+    # dist.stop()
 
 def recvmain():
     context = zmq.Context()

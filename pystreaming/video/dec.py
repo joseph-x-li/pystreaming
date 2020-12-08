@@ -21,8 +21,12 @@ def dec_ps(shutdown, infd, outfd, rcvhwm, outhwm):
     while not shutdown.is_set():
         time.sleep(0.01)  # 100 cycles a sec
         if poller.poll(0):
-            buf, idx = intf.recv_buf_idx(socket, flags=zmq.NOBLOCK)
-            intf.send_ndarray_idx(out, decoder(buf), idx, flags=zmq.NOBLOCK)
+            try:
+                buf, idx = intf.recv_buf_idx(socket, flags=zmq.NOBLOCK)
+                intf.send_ndarray_idx(out, decoder(buf), idx, flags=zmq.NOBLOCK)
+            except zmq.error.Again:
+                # ignore send misses to out.
+                pass
     
     print("Stopping Decoder")
 
@@ -42,12 +46,14 @@ class Decoder:
         self.receiver = self.context.socket(zmq.PULL)
         self.receiver.bind(self.outfd)
 
-    def get_listener(self):
+    def getsocket(self):
         return self.receiver
 
-    def hear(self):
+    def recv(self):
+        if self.workers == []:
+            raise RuntimeError("Tried to receive frame from stopped Decoder")
+        # Add timeout function?
         return intf.recv_ndarray_idx(self.receiver)
-        
 
     def start(self):
         if self.workers != []:
