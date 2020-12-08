@@ -45,6 +45,10 @@ class Decoder:
     def get_listener(self):
         return self.receiver
 
+    def hear(self):
+        return intf.recv_ndarray_idx(self.receiver)
+        
+
     def start(self):
         if self.workers != []:
             raise RuntimeError("Tried to start running Decoder")

@@ -41,7 +41,8 @@ def encdistmain(cam):
     start = time.time()
     for i in range(n):
         print(i)
-        bank.tell(cam.read()[1])
+        bank.send(cam.read()[1])
+        time.sleep(1/30)
     print(f"Did {n} frames in {time.time() - start}, fps = {n / (time.time() - start)}")
     print("STOPPING")
     bank.stop_workers()
@@ -49,10 +50,10 @@ def encdistmain(cam):
 
 def recvmain():
     context = zmq.Context()
-    aioreq = stream.AIOREQ("tcp://172.16.0.49:5553")
-    dec = stream.UltraJPGDec(context, procs=1)
-    aioreq.start()
-    dec.start_workers()
+    req = stream.Requester("tcp://172.16.0.49:5553")
+    dec = stream.Decoder(context, procs=2)
+    req.start()
+    dec.start()
     while True:
         frame, idx = dec.hear()
         cv2.imshow("test", frame)
@@ -61,9 +62,9 @@ def recvmain():
 
 class fakecamera:
     def __init__(self, size):
-        self.frame = cv2.imread(f"pystreaming/pycodec/test_imgs/{size}.jpg")
+        self.frame = cv2.imread(f"./pystreaming/video/testcards/{size}.png")
     def read(self):
-        return None, frame
+        return None, self.frame
 
 if __name__ == "__main__":
     # cap = cv2.VideoCapture(gstreamer_pipeline(
@@ -78,5 +79,5 @@ if __name__ == "__main__":
     # cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
     # cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
     # cap.set(cv2.CAP_PROP_FPS, 30)
-    # encdistmain(cap)
+    # encdistmain(fakecamera("1920x1080"))
     recvmain()

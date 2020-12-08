@@ -25,8 +25,8 @@ def enc_ps(shutdown, infd, outfd, rcvhwm, outhwm):
         if poller.poll(0):
             try:
                 arr, idx = intf.recv_ndarray_idx(socket, flags=zmq.NOBLOCK)
-                intf.send_buf_idx(socket, encoder(arr), idx, flags=zmq.NOBLOCK)
-            except zmq.exception.Again:
+                intf.send_buf_idx(out, encoder(arr), idx, flags=zmq.NOBLOCK)
+            except zmq.error.Again:
                 # ignore send misses to distributor.
                 # Should not happen if there is a distributor.
                 # Could implement a signal that there is a distributor. Not strictly necessary tho.
@@ -72,9 +72,11 @@ class Encoder:
             ps.daemon = True
             ps.start()
 
+        time.sleep(1)  # Allow workers to spin up
+
     def stop(self):
         if self.workers == []:
-            raise RuntimeError("Tried to stop stopped Encode")
+            raise RuntimeError("Tried to stop stopped Encoder")
 
         self.shutdown.set()
         for ps in self.workers:

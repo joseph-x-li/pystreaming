@@ -25,7 +25,7 @@ def recv_ndarray_idx(socket, flags=0):
     Args:
         socket (zmq.Context.socket): Socket through which to receive data.
         flags (int, optional): Zmq flags to execute with 
-            (only zmq.NOBLOCK or zmq.SNDMORE). Defaults to 0.
+            (only zmq.NOBLOCK). Defaults to 0.
 
     Returns:
         [tuple(numpy.ndarray, int)]: Numpy array and index received.
@@ -56,7 +56,7 @@ def recv_buf_idx(socket, flags=0):
     Args:
         socket (zmq.Context.socket): Socket through which to receive data.
         flags (int, optional): Zmq flags to execute with 
-            (only zmq.NOBLOCK or zmq.SNDMORE). Defaults to 0.
+            (only zmq.NOBLOCK). Defaults to 0.
 
     Returns:
         [tuple(bytes, int)]: Buffer and index received.
