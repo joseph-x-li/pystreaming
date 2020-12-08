@@ -57,7 +57,8 @@ def recvmain():
     while True:
         frame, idx = dec.hear()
         cv2.imshow("test", frame)
-        cv2.waitKey(0)
+        if cv2.waitKey(1) & 0xFF == ord('q'): 
+            break
         print(f"Finally got idx={idx}")
 
 class fakecamera:

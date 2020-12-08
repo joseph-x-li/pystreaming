@@ -9,11 +9,12 @@ async def aioreq(context, source, track, drain):
     while True:
         # rate limit to 30x a second => 90x requests a sec by default
         await asyncio.sleep(1 / 30)
-        await socket.send(bytes(source, "utf-8"))
+        await socket.send(bytes(track, "utf-8"))
         buf = await socket.recv()
         idx = await socket.recv_pyobj()
         if idx == -1:
             continue  # throw away if no frame available
+        print(3)
         await drain.send(buf, copy=False, flags=zmq.SNDMORE)
         await drain.send_pyobj(idx)
 
@@ -44,7 +45,7 @@ def aiomain(source, track, outfd, procs, shutdown):
 class Requester:
     outfd = "ipc:///tmp/decin"
 
-    def __init__(self, source, track=None, procs=3):
+    def __init__(self, source, track="none", procs=3):
         self.source, self.procs, self.track = source, procs, track
         self.shutdown = mp.Event()
         self.psargs = (self.source, self.track, self.outfd, self.procs, self.shutdown)

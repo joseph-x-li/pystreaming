@@ -56,6 +56,7 @@ class Encoder:
             raise RuntimeError("Tried to send frame to stopped Encoder")
         try:
             intf.send_ndarray_idx(self.sender, frame, self.idx, flags=zmq.NOBLOCK)
+            self.idx += 1
         except zmq.error.Again:
             raise RuntimeError("Worker processes are not processing frames fast enough")
         # change behavior to:
