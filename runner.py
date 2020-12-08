@@ -38,7 +38,7 @@ def encdistmain(cam):
     dist = stream.Distributor("tcp://*:5553")
     bank.start()
     dist.start()
-    bank._testcard()
+    bank._testcard(stream.TEST_M)
     # start = time.time()
     # for i in range(n):
     #     print(i)
@@ -56,7 +56,7 @@ def recvmain():
     req.start()
     dec.start()
     while True:
-        frame, idx = dec.hear()
+        frame, idx = dec.recv()
         cv2.imshow("test", frame)
         if cv2.waitKey(1) & 0xFF == ord('q'): 
             break
@@ -81,5 +81,5 @@ if __name__ == "__main__":
     # cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
     # cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
     # cap.set(cv2.CAP_PROP_FPS, 30)
-    # encdistmain(fakecamera("1920x1080"))
-    recvmain()
+    encdistmain(fakecamera("1920x1080"))
+    # recvmain()

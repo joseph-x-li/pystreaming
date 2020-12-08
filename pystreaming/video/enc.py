@@ -76,7 +76,7 @@ class Encoder:
             ps.daemon = True
             ps.start()
 
-        time.sleep(1)  # Allow workers to spin up
+        time.sleep(2)  # Allow workers to spin up
 
     def stop(self):
         """Stop a pool of encoders.
@@ -104,5 +104,6 @@ class Encoder:
         else:
             storage = np.asarray(testimage)
         for i in count():
+            print(i)
             self.send(storage[i % 360] if animated else storage)
             time.sleep(1 / 30)

@@ -1,4 +1,5 @@
 from PIL import Image
+import os
 
 TEST_S = 0
 TEST_M = 1
@@ -35,7 +36,8 @@ def loadimage(enum):
         PIL.Image: Image requested.
     """
     try:
-        return Image.open()
+        truepath = os.path.join(os.path.dirname(os.path.realpath(__file__)), lookup[enum])
+        return Image.open(truepath)
     except IndexError:
         raise IndexError(f"Unrecognized image option: {enum}")
         
