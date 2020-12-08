@@ -81,5 +81,5 @@ if __name__ == "__main__":
     # cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
     # cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
     # cap.set(cv2.CAP_PROP_FPS, 30)
-    encdistmain(fakecamera("1920x1080"))
-    # recvmain()
+    # encdistmain(fakecamera("1920x1080"))
+    recvmain()

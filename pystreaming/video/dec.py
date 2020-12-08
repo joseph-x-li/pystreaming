@@ -63,6 +63,8 @@ class Decoder:
         for ps in self.workers:
             ps.daemon = True
             ps.start()
+        
+        time.sleep(2)
 
     def stop(self):
         if self.workers == []:
