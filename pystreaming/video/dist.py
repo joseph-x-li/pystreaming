@@ -28,9 +28,9 @@ def dist_ps(shutdown, infd, endpt, rcvhwm, tracks):
             track = distributor.recv().decode()
             try:
                 buf, idx = queues[track].pop()
-                intf.send_buf_idx(distributor, buf, idx, flags=zmq.NODELAY)
+                intf.send_buf_idx(distributor, buf, idx, flags=zmq.NOBLOCK)
             except (KeyError, Empty):  # no frames available or wrong track selected
-                intf.send_buf_idx(distributor, b"nil", -1, flags=zmq.NODELAY)
+                intf.send_buf_idx(distributor, b"nil", -1, flags=zmq.NOBLOCK)
 
     print("Distributor stopped")
 
