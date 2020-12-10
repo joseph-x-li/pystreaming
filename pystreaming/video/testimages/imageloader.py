@@ -17,17 +17,18 @@ lookup = [
     "1920x1080_i.png",
 ]
 
+
 def loadimage(enum):
     """Load a test image or a test card.
 
     Args:
-        enum (int): One of 
-        pystreaming.TEST_S 
-        pystreaming.TEST_M 
-        pystreaming.TEST_L 
-        pystreaming.IMAG_S 
-        pystreaming.IMAG_M 
-        pystreaming.IMAG_L 
+        enum (int): One of
+        pystreaming.TEST_S
+        pystreaming.TEST_M
+        pystreaming.TEST_L
+        pystreaming.IMAG_S
+        pystreaming.IMAG_M
+        pystreaming.IMAG_L
 
     Raises:
         IndexError: Raised when received enum is not defined.
@@ -36,8 +37,9 @@ def loadimage(enum):
         PIL.Image: Image requested.
     """
     try:
-        truepath = os.path.join(os.path.dirname(os.path.realpath(__file__)), lookup[enum])
+        truepath = os.path.join(
+            os.path.dirname(os.path.realpath(__file__)), lookup[enum]
+        )
         return Image.open(truepath)
     except IndexError:
         raise IndexError(f"Unrecognized image option: {enum}")
-        

@@ -27,7 +27,7 @@ def dec_ps(shutdown, infd, outfd, rcvhwm, outhwm):
             except zmq.error.Again:
                 # ignore send misses to out.
                 pass
-    
+
     print("Stopping Decoder")
 
 
@@ -63,7 +63,7 @@ class Decoder:
         for ps in self.workers:
             ps.daemon = True
             ps.start()
-        
+
         time.sleep(2)
 
     def stop(self):
