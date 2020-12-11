@@ -67,4 +67,3 @@ class Requester:
         self.ps.join()
         self.ps = None
         self.shutdown.clear()
-

@@ -1,7 +1,10 @@
 import setuptools
 
-with open("README.md", "r") as fh:
+with open("README.md", 'r') as fh:
     long_description = fh.read()
+
+with open("requirements.txt", 'r') as fh:
+    install_requires = fh.read()
 
 setuptools.setup(
     name="pystreaming",
@@ -13,12 +16,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/joseph-x-li/pystreaming",
     packages=setuptools.find_packages(),
-    install_requires=[
-        "numpy",
-        "pyzmq",
-        "turbojpeg",
-        "Pillow",
-    ],
+    install_requires=install_requires,
     classifiers=[
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
