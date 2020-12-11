@@ -46,9 +46,6 @@ class Decoder:
         self.receiver = self.context.socket(zmq.PULL)
         self.receiver.bind(self.outfd)
 
-    def getsocket(self):
-        return self.receiver
-
     def recv(self):
         if self.workers == []:
             raise RuntimeError("Tried to receive frame from stopped Decoder")

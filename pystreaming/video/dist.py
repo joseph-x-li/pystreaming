@@ -19,11 +19,14 @@ def dist_ps(shutdown, infd, endpt, rcvhwm, tracks):
         tracks = ["none"]
     queues = {track: CircularList() for track in tracks}
     while not shutdown.is_set():
+
         time.sleep(0.001)  # 1000 cycles/sec ~> 4-6 streams at once.
+
         if collector.poll(0):  # returns 0 if no event, something else if there is
             buf, idx = intf.recv_buf_idx(collector, flags=zmq.NOBLOCK)
             for fqueue in queues.values():
                 fqueue.push((buf, idx))  # add to buf queue
+
         if distributor.poll(0):  # got frame req
             track = distributor.recv().decode()
             try:

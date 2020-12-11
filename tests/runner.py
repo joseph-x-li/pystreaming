@@ -2,6 +2,7 @@ import cv2
 import time
 import pystreaming as stream
 import zmq
+import numpy as np
 
 def gstreamer_pipeline(
     capture_width=1920,
@@ -64,22 +65,49 @@ def recvmain():
 
 class fakecamera:
     def __init__(self, size):
-        self.frame = cv2.imread(f"./pystreaming/video/testcards/{size}.png")
+        self.frame = cv2.imread(f"./pystreaming/video/testimages/{size}.png")
     def read(self):
+        time.sleep(1/35)
         return None, self.frame
 
+def getstandcam(gst=False):
+    if gst:
+        cap = cv2.VideoCapture(gstreamer_pipeline(
+            capture_width=640,
+            capture_height=480,
+            display_width=640,
+            display_height=480,
+            flip_method=2,
+        ), cv2.CAP_GSTREAMER)
+    else:
+        cap = cv2.VideoCapture(0)
+        cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"MJPEG"))
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+        cap.set(cv2.CAP_PROP_FPS, 30)
+    return cap
+
+
+def yielder(animated=True):
+    testimage = stream.loadimage(5)
+    storage = []
+    for ang in range(360):
+        storage.append(np.asarray(testimage.rotate(ang)))
+    i = 0
+    if animated:
+        while True:
+            time.sleep(1/30)
+            yield storage[i % 360]
+            i += 1
+    else:
+        while True:
+            time.sleep(1/30)
+            yield storage[0]
+
 if __name__ == "__main__":
-    # cap = cv2.VideoCapture(gstreamer_pipeline(
-    #     capture_width=640,
-    #     capture_height=480,
-    #     display_width=640,
-    #     display_height=480,
-    #     flip_method=2,
-    # ), cv2.CAP_GSTREAMER)
-    # cap = cv2.VideoCapture(0)
-    # cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"RG10"))
-    # cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
-    # cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
-    # cap.set(cv2.CAP_PROP_FPS, 30)
+    x = fakecamera("640x480_c")
+    
+    stream.display(yielder(), BGR=False)
+    
     # encdistmain(fakecamera("1920x1080"))
-    recvmain()
+    # recvmain()
