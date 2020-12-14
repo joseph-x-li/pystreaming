@@ -40,14 +40,14 @@ def encdistmain(cam):
         dist.start()
         if cam is not None:
             while True:
-                frame, _ = cam.read()
+                _, frame = cam.read()
                 bank.send(frame)
         else:
             bank._testcard(stream.TEST_M, animated=True)
     except KeyboardInterrupt:
         pass
     finally:
-        bank.stop_workers()
+        bank.stop()
         dist.stop()
 
 def recvmain():
@@ -99,5 +99,5 @@ def yielder(animated=True):
 
 if __name__ == "__main__":
     # stream.display(stream.collate(yielder()), BGR=False)
-    encdistmain(None)
+    encdistmain(getstandcam(gst=True))
     # recvmain()
