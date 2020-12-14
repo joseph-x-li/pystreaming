@@ -89,6 +89,7 @@ def getstandcam(gst=False):
 
 
 def yielder(animated=True):
+    print("yielder primed")
     testimage = stream.loadimage(5)
     storage = []
     for ang in range(360):
@@ -97,7 +98,7 @@ def yielder(animated=True):
     if animated:
         while True:
             time.sleep(1/30)
-            yield storage[i % 360]
+            yield (i, storage[i % 360])
             i += 1
     else:
         while True:
@@ -105,9 +106,9 @@ def yielder(animated=True):
             yield storage[0]
 
 if __name__ == "__main__":
-    x = fakecamera("640x480_c")
+    # x = fakecamera("640x480_c")
+    stream.display(stream.collate(yielder()), BGR=False)
     
-    stream.display(yielder(), BGR=False)
     
     # encdistmain(fakecamera("1920x1080"))
     # recvmain()

@@ -52,6 +52,12 @@ class Decoder:
         # Add timeout function?
         return intf.recv_ndarray_idx(self.receiver)
 
+    def handler(self):
+        if self.workers == []:
+            raise RuntimeError("Cannot produce stream handler from stopped Decoder")
+        while True:
+            yield intf.recv_ndarray_idx(self.receiver)
+
     def start(self):
         if self.workers != []:
             raise RuntimeError("Tried to start running Decoder")

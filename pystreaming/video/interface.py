@@ -2,7 +2,7 @@ import numpy as np
 import zmq
 
 
-def send_ndarray_idx(socket, arr, idx, flags=0):
+def send_ndarray_idx(socket, arr, idx, meta=None, flags=0):
     """Send a numpy array and an index.
 
     Args:

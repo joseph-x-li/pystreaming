@@ -78,7 +78,7 @@ class CircularList:
             pyobj: The object desired.
         """
         if idx >= self.size or idx < 0:
-            raise IndexError(f"list index {idx} out of range: [0, {self.size}]")
+            raise IndexError(f"list index {idx} out of range: [0, {self.size})")
         return self._array[(self._front + idx) % self.maxsize]
 
     def __setitem__(self, idx, new_val):
@@ -93,9 +93,12 @@ class CircularList:
             IndexError: Raise if the index is out of range
         """
         if idx >= self.size or idx < 0:
-            raise IndexError(f"list index {idx} out of range: [0, {self.size}]")
+            raise IndexError(f"list index {idx} out of range: [0, {self.size})")
         self._array[(self._front + idx) % self.maxsize] = new_val
 
+    def __repr__(self):
+        return self._array.__repr__() + f" front: {self._front} back: {self._back}"
+    
     def full(self):
         """Check whether the current list size is the maximum size
 
@@ -169,13 +172,19 @@ class CircularOrderedDict:
     def keys(self):
         return self.dict.keys()
 
+    def __len__(self):
+        return len(self.dict)
+    
     def __setitem__(self, key, value):
         if key not in self.dict:
-            raise KeyError(key)
+            raise KeyError(key) + " use insert_end to add an element"
         self.dict[key] = value
 
     def __getitem__(self, key):
         return self.dict[key]
+    
+    def __repr__(self):
+        return self.dict.__repr__()
 
 
 class BufferedCOD(CircularOrderedDict):
