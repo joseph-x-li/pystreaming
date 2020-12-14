@@ -31,36 +31,36 @@ def gstreamer_pipeline(
         )
     )
 
-n = 10000
-
 def encdistmain(cam):
-    context = zmq.Context()
-    bank = stream.Encoder(context, procs=2)
-    dist = stream.Distributor("tcp://*:5553")
-    bank.start()
-    dist.start()
-    bank._testcard(stream.TEST_M, animated=True)
-    bank.stop_workers()
-    dist.stop()
+    try:
+        context = zmq.Context()
+        bank = stream.Encoder(context, procs=2)
+        dist = stream.Distributor("tcp://*:5553")
+        bank.start()
+        dist.start()
+        if cam is not None:
+            while True:
+                frame, _ = cam.read()
+                bank.send(frame)
+        else:
+            bank._testcard(stream.TEST_M, animated=True)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        bank.stop_workers()
+        dist.stop()
 
 def recvmain():
     context = zmq.Context()
-    # req = stream.Requester("tcp://172.16.0.49:5553")
-    req = stream.Requester("tcp://127.0.0.1:5553")
+    req = stream.Requester("tcp://172.16.0.49:5553")
+    # req = stream.Requester("tcp://127.0.0.1:5553")
     dec = stream.Decoder(context, procs=2)
     req.start()
     dec.start()
-    # stream.display(stream.collate(dec.handler()), BGR=True)
-    stream.display(dec.handler(), BGR=True)
+    stream.display(stream.collate(dec.handler()), BGR=True)
+    # stream.display(dec.handler(), BGR=True)
     req.stop()
     dec.stop()
-
-class fakecamera:
-    def __init__(self, size):
-        self.frame = cv2.imread(f"./pystreaming/video/testimages/{size}.png")
-    def read(self):
-        time.sleep(1/35)
-        return None, self.frame
 
 def getstandcam(gst=False):
     if gst:
