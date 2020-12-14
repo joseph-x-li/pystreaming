@@ -6,7 +6,11 @@ import types
 def display(handler, BGR=True):
     print("display primed")
     if isinstance(handler, types.GeneratorType):
-        for idx, frame in handler:
+        pidx = -1
+        for frame, idx in handler:
+            if idx < pidx:
+                print("FRAME OUT OF ORDER")
+            pidx = idx
             if not BGR:
                 frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
             cv2.imshow("pystreaming-display", frame)

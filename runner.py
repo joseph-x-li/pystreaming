@@ -39,29 +39,21 @@ def encdistmain(cam):
     dist = stream.Distributor("tcp://*:5553")
     bank.start()
     dist.start()
-    bank._testcard(stream.TEST_M)
-    # start = time.time()
-    # for i in range(n):
-    #     print(i)
-    #     bank.send(cam.read()[1])
-    #     time.sleep(1/30)
-    # print(f"Did {n} frames in {time.time() - start}, fps = {n / (time.time() - start)}")
-    # print("STOPPING")
-    # bank.stop_workers()
-    # dist.stop()
+    bank._testcard(stream.TEST_M, animated=True)
+    bank.stop_workers()
+    dist.stop()
 
 def recvmain():
     context = zmq.Context()
-    req = stream.Requester("tcp://172.16.0.49:5553")
+    # req = stream.Requester("tcp://172.16.0.49:5553")
+    req = stream.Requester("tcp://127.0.0.1:5553")
     dec = stream.Decoder(context, procs=2)
     req.start()
     dec.start()
-    while True:
-        frame, idx = dec.recv()
-        cv2.imshow("test", frame)
-        if cv2.waitKey(1) & 0xFF == ord('q'): 
-            break
-        print(f"Finally got idx={idx}")
+    # stream.display(stream.collate(dec.handler()), BGR=True)
+    stream.display(dec.handler(), BGR=True)
+    req.stop()
+    dec.stop()
 
 class fakecamera:
     def __init__(self, size):
@@ -106,9 +98,6 @@ def yielder(animated=True):
             yield storage[0]
 
 if __name__ == "__main__":
-    # x = fakecamera("640x480_c")
-    stream.display(stream.collate(yielder()), BGR=False)
-    
-    
-    # encdistmain(fakecamera("1920x1080"))
+    # stream.display(stream.collate(yielder()), BGR=False)
+    encdistmain(None)
     # recvmain()
