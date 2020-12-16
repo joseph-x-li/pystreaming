@@ -98,7 +98,7 @@ class CircularList:
 
     def __repr__(self):
         return self._array.__repr__() + f" front: {self._front} back: {self._back}"
-    
+
     def full(self):
         """Check whether the current list size is the maximum size
 
@@ -174,7 +174,7 @@ class CircularOrderedDict:
 
     def __len__(self):
         return len(self.dict)
-    
+
     def __setitem__(self, key, value):
         if key not in self.dict:
             raise KeyError(key) + " use insert_end to add an element"
@@ -182,7 +182,7 @@ class CircularOrderedDict:
 
     def __getitem__(self, key):
         return self.dict[key]
-    
+
     def __repr__(self):
         return self.dict.__repr__()
 

@@ -99,5 +99,5 @@ def yielder(animated=True):
 
 if __name__ == "__main__":
     # stream.display(stream.collate(yielder()), BGR=False)
-    encdistmain(getstandcam(gst=True))
-    # recvmain()
+    # encdistmain(getstandcam(gst=True))
+    recvmain()

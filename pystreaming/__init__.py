@@ -2,8 +2,7 @@ from pystreaming.video.enc import Encoder
 from pystreaming.video.dist import Distributor
 from pystreaming.video.req import Requester
 from pystreaming.video.dec import Decoder
-from pystreaming.video.collate import collate
-from pystreaming.video.disp import display
+from pystreaming.video.handlers import display, collate
 from pystreaming.video.testimages.imageloader import (
     IMAG_S,
     IMAG_M,
