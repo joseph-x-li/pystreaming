@@ -1,3 +1,8 @@
+from threading import Lock
+from collections import OrderedDict
+from orderedset import OrderedSet
+
+
 class Empty(Exception):
     """Raised when trying to pop from an empty queue"""
 
@@ -101,3 +106,107 @@ class CircularList:
             boolean: True if full else False
         """
         return self.size == self.maxsize
+
+
+# Classes below are either unneeded or need to be updated.
+
+
+class BufferedCList(CircularList):
+    """Subclass of CircularList that introduces the concept of a frame buffer"""
+
+    def __init__(self, *args, buffer=5, **kwargs):
+        super().__init__(*args, **kwargs)
+        if buffer >= self.maxsize:
+            raise ValueError(
+                f"buffer:{buffer} must be strictly less than maxsize: {self.maxsize}"
+            )
+        self.threshold = self.maxsize - buffer
+
+    def at_threshold(self):
+        return self.size >= self.threshold
+
+
+class SafeCList(CircularList):
+    """A thread-safe wrapper of the base class CircularList"""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.access_lock = Lock()
+
+    def push(self, item):
+        with self.access_lock:
+            super().push(item)
+
+    def pop(self):
+        with self.access_lock:
+            return super().pop()
+
+    def __getitem__(self, idx):
+        with self.access_lock:
+            return super().__getitem__(idx)
+
+    def __setitem__(self, idx, new_val):
+        with self.access_lock:
+            super().__setitem__(idx, new_val)
+
+
+class CircularOrderedDict:
+    def __init__(self, maxsize):
+        self.dict = OrderedDict()
+        self.maxsize = maxsize
+
+    def pop_front(self):
+        return self.dict.popitem(last=False)
+
+    def insert_end(self, key, value):
+        # Insert key-value pair. If key exists, it is moved to the back and updated.
+        if key in self.dict:
+            self.dict.pop(key)
+        self.dict[key] = value
+        if len(self.dict) > self.maxsize:
+            self.dict.popitem(last=False)
+
+    def delete(self, key):
+        del self.dict[key]
+
+    def keys(self):
+        return self.dict.keys()
+
+    def __len__(self):
+        return len(self.dict)
+
+    def __setitem__(self, key, value):
+        if key not in self.dict:
+            raise KeyError(key) + " use insert_end to add an element"
+        self.dict[key] = value
+
+    def __getitem__(self, key):
+        return self.dict[key]
+
+    def __repr__(self):
+        return self.dict.__repr__()
+
+
+class BufferedCOD(CircularOrderedDict):
+    def __init__(self, *args, buffer=5, **kwargs):
+        super().__init__(*args, **kwargs)
+        assert 0 <= buffer and buffer < self.maxsize
+        self.threshold = self.maxsize - buffer
+
+    def pop_front(self):
+        if len(self.dict) > self.threshold:
+            return super().pop_front()
+        return None
+
+
+class CircularOrderedSet(OrderedSet):
+    def __init__(self, maxsize):
+        super().__init__()
+        self.maxsize = maxsize
+
+    def push(self, item):
+        if item in self:
+            self.remove(item)
+        self.add(item)
+        while len(self) > self.maxsize:
+            self.pop(last=False)

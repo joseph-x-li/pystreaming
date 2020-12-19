@@ -13,7 +13,7 @@ def display(handler, BGR=True):
 
 def collate(handler, buffer=10):
     initsize = buffer * 1.2
-    collate = CircularOrderedDict(initsize)
+    collate = CircularOrderedDict(int(initsize))
     for frame, idx in handler:
         if idx == 0:  # Restart collate if stream restart occurs
             collate = CircularOrderedDict(initsize)
