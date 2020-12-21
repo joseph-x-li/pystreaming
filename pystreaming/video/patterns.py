@@ -38,9 +38,8 @@ class Streamer:
 
 class Worker:
     def __init__(
-        self, context, source, drain, func, track=None, reqprocs=3, decprocs=2
+        self, context, source, drain, track=None, reqprocs=3, decprocs=2
     ):
-        self.func = func
         seed = uuid.uuid1().hex
         self.requester = Requester(source, seed=seed, track=track, procs=reqprocs)
         self.decoder = Decoder(context, seed=seed, sndbuf=True, procs=decprocs)
@@ -52,7 +51,7 @@ class Worker:
             self.decoder.start()
             self.requester.start()
             for arr, buf, idx in self.decoder.handler():
-                res = self.func(arr)
+                res = func(arr)
                 intf.send(self.drain, idx, buf=buf, meta=res)
         finally:
             self.requester.stop()

@@ -126,9 +126,9 @@ def streampattern(cam):
 def workerpattern():
     context = zmq.Context()
     asdf = stream.Worker(
-        context, "tcp://172.16.0.25:5553", "tcp://172.16.0.25:5554", lambda x: x.shape
+        context, "tcp://172.16.0.25:5553", "tcp://172.16.0.25:5554"
     )
-    asdf.run()
+    asdf.run(lambda x: x.shape)
     
 def collectorpattern():
     context = zmq.Context()
@@ -140,6 +140,7 @@ def collectorpattern():
 if __name__ == "__main__":
     # stream.display(stream.collate(yielder()), BGR=False)
     # encdistmain(getstandcam(gst=True))
-    streampattern(FakeCam())
+    # streampattern(FakeCam())
+    workerpattern()
     # encdistmain(None)
     # recvmain()
