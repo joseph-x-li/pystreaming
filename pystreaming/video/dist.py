@@ -10,14 +10,18 @@ from pystreaming.listlib.circularlist import CircularList, Empty
 def dist_ps(shutdown, infd, endpt, rcvhwm, tracks):
     print(f"Start Distributing to {endpt}")
     context = zmq.Context()
+
     collector = context.socket(zmq.PULL)
     collector.setsockopt(zmq.RCVHWM, rcvhwm)
     collector.bind(infd)
+
     distributor = context.socket(zmq.REP)
     distributor.bind(endpt)
+
     if tracks is None:  # default track is "none"
         tracks = ["none"]
     queues = {track: CircularList() for track in tracks}
+
     while not shutdown.is_set():
 
         time.sleep(0.001)  # 1000 cycles/sec ~> 4-6 streams at once.
@@ -39,13 +43,13 @@ def dist_ps(shutdown, infd, endpt, rcvhwm, tracks):
 
 
 class Distributor:
-    infd = "ipc:///tmp/encout"
     rcvhwm = 30
 
-    def __init__(self, endpoint, tracks=None):
+    def __init__(self, endpoint, seed="", tracks=None):
+        infd = "ipc:///tmp/encout" + seed
         self.shutdown = mp.Event()
         self.ps = None
-        self.psargs = (self.shutdown, self.infd, endpoint, self.rcvhwm, tracks)
+        self.psargs = (self.shutdown, infd, endpoint, self.rcvhwm, tracks)
 
     def start(self):
         if self.ps is not None:

@@ -42,7 +42,6 @@ def aiomain(source, track, outfd, procs, shutdown):
 
 
 class Requester:
-
     def __init__(self, source, seed="", track="none", procs=3):
         outfd = "ipc:///tmp/decin" + seed
         self.source, self.procs, self.track = source, procs, track
