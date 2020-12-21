@@ -3,6 +3,10 @@ from pystreaming import Requester, Encoder, Distributor, Decoder
 
 def main():
     context = zmq.Context()
+    x = Encoder(context)
+    x.start()
+    time.sleep(1)
+    x.stop()
     x = Requester("tcp://127.0.0.1:5555")
     x.start()
     time.sleep(1)
@@ -10,10 +14,6 @@ def main():
 
     time.sleep(1)
     
-    x = Encoder(context)
-    x.start()
-    time.sleep(1)
-    x.stop()
     
     x = Distributor("tcp://*:5555")
     x.start()

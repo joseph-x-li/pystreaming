@@ -14,7 +14,6 @@ async def aioreq(context, source, track, drain):
         idx = await socket.recv_pyobj()
         if idx == -1:
             continue  # throw away if no frame available
-        print(3)
         await drain.send(buf, copy=False, flags=zmq.SNDMORE)
         await drain.send_pyobj(idx)
 
@@ -43,12 +42,12 @@ def aiomain(source, track, outfd, procs, shutdown):
 
 
 class Requester:
-    outfd = "ipc:///tmp/decin"
 
-    def __init__(self, source, track="none", procs=3):
+    def __init__(self, source, seed="", track="none", procs=3):
+        outfd = "ipc:///tmp/decin" + seed
         self.source, self.procs, self.track = source, procs, track
         self.shutdown = mp.Event()
-        self.psargs = (self.source, self.track, self.outfd, self.procs, self.shutdown)
+        self.psargs = (self.source, self.track, outfd, self.procs, self.shutdown)
         self.ps = None
 
     def start(self):

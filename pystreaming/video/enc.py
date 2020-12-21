@@ -2,33 +2,41 @@ from turbojpeg import TurboJPEG, TJSAMP_420, TJFLAG_FASTDCT, TJFLAG_FASTUPSAMPLE
 import numpy as np
 import zmq, time
 import multiprocessing as mp
-from PIL import Image
 from functools import partial
 from itertools import count
 from pystreaming.video.testimages.imageloader import loadimage
 import pystreaming.video.interface as intf
 
+QUALITY = 50
+
 
 def enc_ps(shutdown, infd, outfd, rcvhwm, outhwm):
     print("Starting Encoder")
     context = zmq.Context()
+
     socket = context.socket(zmq.PULL)
     socket.setsockopt(zmq.RCVHWM, rcvhwm)
     socket.connect(infd)
+
     out = context.socket(zmq.PUSH)
     out.setsockopt(zmq.SNDHWM, outhwm)
     out.connect(outfd)
+
     poller = zmq.Poller()
     poller.register(socket, zmq.POLLIN)
+
     encoder = partial(
-        TurboJPEG().encode, quality=70, jpeg_subsample=TJSAMP_420, flags=TJFLAG_FASTDCT
+        TurboJPEG().encode,
+        quality=QUALITY,
+        jpeg_subsample=TJSAMP_420,
+        flags=TJFLAG_FASTDCT,
     )
     while not shutdown.is_set():
         time.sleep(0.01)  # 100 cycles/sec
         if poller.poll(0):
             try:
-                arr, idx = intf.recv_ndarray_idx(socket, flags=zmq.NOBLOCK)
-                intf.send_buf_idx(out, encoder(arr), idx, flags=zmq.NOBLOCK)
+                arr, idx = intf.recv(socket, arr=True, flags=zmq.NOBLOCK)
+                intf.send(out, idx, buf=encoder(arr), flags=zmq.NOBLOCK)
             except zmq.error.Again:
                 # ignore send misses to distributor.
                 # Should not happen if there is a distributor.
@@ -38,33 +46,33 @@ def enc_ps(shutdown, infd, outfd, rcvhwm, outhwm):
 
 
 class Encoder:
-    infd = "ipc:///tmp/encin"
-    outfd = "ipc:///tmp/encout"
     tellhwm = 30
     rcvhwm = outhwm = 10
 
-    def __init__(self, context, procs=2):
+    def __init__(self, context, seed="", procs=2):
+        infd = "ipc:///tmp/encin" + seed
+        outfd = "ipc:///tmp/encout" + seed
         self.context, self.procs = context, procs
         self.shutdown = mp.Event()
-        self.psargs = (self.shutdown, self.infd, self.outfd, self.rcvhwm, self.outhwm)
+        self.psargs = (self.shutdown, infd, outfd, self.rcvhwm, self.outhwm)
         self.workers = []
         self.idx = 0
 
         self.sender = self.context.socket(zmq.PUSH)
         self.sender.setsockopt(zmq.SNDHWM, self.tellhwm)
-        self.sender.bind(self.infd)
+        self.sender.bind(infd)
 
     def send(self, frame):
         if self.workers == []:
             raise RuntimeError("Tried to send frame to stopped Encoder")
         try:
-            intf.send_ndarray_idx(self.sender, frame, self.idx, flags=zmq.NOBLOCK)
+            intf.send(self.sender, self.idx, arr=frame, flags=zmq.NOBLOCK)
             self.idx += 1
         except zmq.error.Again:
             raise RuntimeError("Worker processes are not processing frames fast enough")
-        # change behavior to:
-        # IF working, but slow, print a warning
-        # If not responding, only then raise runtime error
+            # change behavior to:
+            # IF working, but slow, print a warning
+            # If not responding, only then raise runtime error
 
     def start(self):
         if self.workers != []:

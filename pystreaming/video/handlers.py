@@ -1,5 +1,5 @@
 import cv2
-from pystreaming.listlib.circularlist import CircularOrderedDict
+from pystreaming.listlib.circulardict import CircularOrderedDict
 
 # handler (generator): Any object that yields frames.
 def display(handler, BGR=True):
@@ -22,13 +22,3 @@ def collate(handler, buffer=10):
             most_recent = min(collate.keys())
             yield collate[most_recent], most_recent
             collate.delete(most_recent)
-
-
-# Worker stream
-"""
-def workthis(inhandler, func):
-    for idx, frame, buf in inhandler:
-        package = func(frame)
-        intf.push_down(idx, buf, package)
-workthis(dec.handler())
-"""

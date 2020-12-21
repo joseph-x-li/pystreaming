@@ -1,9 +1,9 @@
 from pystreaming import Encoder, Distributor, Decoder, Requester
-import zmq
+import zmq, uuid
 
 class Streamer:
     def __init__(self, context, endpoint, procs=2):
-        self.encoder = Encoder(context, endpoint, procs=procs)
+        self.encoder = Encoder(context, procs=procs)
         self.distributor = Distributor(endpoint)
         self.started = False
         
@@ -22,6 +22,8 @@ class Streamer:
         self.distributor.stop()
         
     def send(self, frame):
+        if not self.started:
+            raise RuntimeError("Start the Streamer before sending frames")
         self.encoder.send(frame)
         
 class Worker:

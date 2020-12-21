@@ -23,7 +23,7 @@ def dist_ps(shutdown, infd, endpt, rcvhwm, tracks):
         time.sleep(0.001)  # 1000 cycles/sec ~> 4-6 streams at once.
 
         if collector.poll(0):  # returns 0 if no event, something else if there is
-            buf, idx = intf.recv_buf_idx(collector, flags=zmq.NOBLOCK)
+            buf, idx = intf.recv(collector, buf=True, flags=zmq.NOBLOCK)
             for fqueue in queues.values():
                 fqueue.push((buf, idx))  # add to buf queue
 
@@ -31,9 +31,9 @@ def dist_ps(shutdown, infd, endpt, rcvhwm, tracks):
             track = distributor.recv().decode()
             try:
                 buf, idx = queues[track].pop()
-                intf.send_buf_idx(distributor, buf, idx, flags=zmq.NOBLOCK)
+                intf.send(distributor, idx, buf=buf, flags=zmq.NOBLOCK)
             except (KeyError, Empty):  # no frames available or wrong track selected
-                intf.send_buf_idx(distributor, b"nil", -1, flags=zmq.NOBLOCK)
+                intf.send(distributor, -1, buf=b"nil", flags=zmq.NOBLOCK)
 
     print("Distributor stopped")
 
