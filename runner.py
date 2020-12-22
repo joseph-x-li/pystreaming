@@ -140,7 +140,7 @@ def collectorpattern():
 if __name__ == "__main__":
     # stream.display(stream.collate(yielder()), BGR=False)
     # encdistmain(getstandcam(gst=True))
-    # streampattern(FakeCam())
-    workerpattern()
+    streampattern(FakeCam())
+    # workerpattern()
     # encdistmain(None)
     # recvmain()

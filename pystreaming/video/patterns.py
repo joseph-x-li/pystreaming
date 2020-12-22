@@ -38,7 +38,7 @@ class Streamer:
 
 class Worker:
     def __init__(
-        self, context, source, drain, track=None, reqprocs=3, decprocs=2
+        self, context, source, drain, track="none", reqprocs=3, decprocs=2
     ):
         seed = uuid.uuid1().hex
         self.requester = Requester(source, seed=seed, track=track, procs=reqprocs)
