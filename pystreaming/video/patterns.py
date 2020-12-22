@@ -37,6 +37,8 @@ class Streamer:
 
 
 class Worker:
+    outhwm = 30
+
     def __init__(
         self, context, source, drain, track="none", reqprocs=3, decprocs=2
     ):
@@ -44,6 +46,7 @@ class Worker:
         self.requester = Requester(source, seed=seed, track=track, procs=reqprocs)
         self.decoder = Decoder(context, seed=seed, sndbuf=True, procs=decprocs)
         self.drain = context.socket(zmq.PUSH)
+        self.drain.setsockopt(zmq.SNDHWM, self.outhwm)
         self.drain.connect(drain)
 
     def run(self, func):
@@ -52,7 +55,12 @@ class Worker:
             self.requester.start()
             for arr, buf, idx in self.decoder.handler():
                 res = func(arr)
-                intf.send(self.drain, idx, buf=buf, meta=res)
+                print(res)
+                try:
+                    intf.send(self.drain, idx, buf=buf, meta=res, flags=zmq.NOBLOCK)
+                except zmq.error.Again:
+                    pass  # ignore send misses to drain.
+                    
         finally:
             self.requester.stop()
             self.decoder.stop()
