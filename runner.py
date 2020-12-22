@@ -134,13 +134,15 @@ def collectorpattern():
     context = zmq.Context()
     col = stream.Collector(context, "tcp://*:5554")
     for pack in col.handler():
-        print(pack)
+        for item in pack:
+            print(type(item))
 
 
 if __name__ == "__main__":
     # stream.display(stream.collate(yielder()), BGR=False)
     # encdistmain(getstandcam(gst=True))
-    # streampattern(FakeCam())
-    workerpattern()
     # encdistmain(None)
     # recvmain()
+    streampattern(FakeCam())
+    # workerpattern()
+    # collectorpattern()

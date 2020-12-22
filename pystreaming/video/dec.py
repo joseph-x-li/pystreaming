@@ -44,12 +44,8 @@ class Decoder:
     hearhwm = 30
     rcvhwm = outhwm = 10
 
-    def __init__(
-        self, context, seed="", rcvmeta=False, sndbuf=False, endpoint=None, procs=2
-    ):
+    def __init__(self, context, seed="", rcvmeta=False, sndbuf=False, procs=2):
         infd = "ipc:///tmp/decin" + seed
-        if not (endpoint is None):
-            infd = endpoint
         outfd = "ipc:///tmp/decout" + seed
         self.context, self.procs = context, procs
         self.rcvmeta, self.sndbuf = rcvmeta, sndbuf

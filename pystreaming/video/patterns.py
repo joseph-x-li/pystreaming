@@ -2,6 +2,7 @@ from pystreaming import Encoder, Distributor, Decoder, Requester
 import pystreaming.video.interface as intf
 import pystreaming
 import zmq, uuid
+from zmq.devices import ProcessDevice
 
 
 class Streamer:
@@ -68,7 +69,14 @@ class Worker:
 
 class Collector:
     def __init__(self, context, endpoint):
-        self.decoder = Decoder(context, seed=seed, endpoint=endpoint, rcvmeta=True)
+        seed = uuid.uuid1().hex
+        # https://het.as.utexas.edu/HET/Software/pyZMQ/api/zmq.devices.html#zmq.devices.ProcessDevice
+        self.device = ProcessDevice(zmq.STREAMER, zmq.PULL, zmq.PUSH)
+        self.device.bind_in(endpoint)
+        self.device.bind_out("ipc:///tmp/decin" + seed)
+        self.decoder = Decoder(context, seed=seed, rcvmeta=True)
 
     def handler(self):
+        self.device.start()
+        self.decoder.start()
         return self.decoder.handler()
