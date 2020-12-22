@@ -40,9 +40,7 @@ class Streamer:
 class Worker:
     outhwm = 30
 
-    def __init__(
-        self, context, source, drain, track="none", reqprocs=3, decprocs=2
-    ):
+    def __init__(self, context, source, drain, track="none", reqprocs=3, decprocs=2):
         seed = uuid.uuid1().hex
         self.requester = Requester(source, seed=seed, track=track, procs=reqprocs)
         self.decoder = Decoder(context, seed=seed, sndbuf=True, procs=decprocs)
@@ -61,7 +59,7 @@ class Worker:
                     intf.send(self.drain, idx, buf=buf, meta=res, flags=zmq.NOBLOCK)
                 except zmq.error.Again:
                     pass  # ignore send misses to drain.
-                    
+
         finally:
             self.requester.stop()
             self.decoder.stop()
