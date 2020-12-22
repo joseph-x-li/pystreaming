@@ -34,7 +34,7 @@ class Streamer:
     def testsignal(self):
         if not self.started:
             self.start()
-        self.encoder._testcard(stream.TEST_M)
+        self.encoder._testcard(pystreaming.TEST_M)
 
 
 class Worker:
@@ -66,12 +66,19 @@ class Worker:
 
 
 class Collector:
+    rcvhwm = 30
+    outhwm = 30
+    
     def __init__(self, context, endpoint):
         seed = uuid.uuid1().hex
         # https://het.as.utexas.edu/HET/Software/pyZMQ/api/zmq.devices.html#zmq.devices.ProcessDevice
         self.device = ProcessDevice(zmq.STREAMER, zmq.PULL, zmq.PUSH)
+        self.device.setsockopt_in(zmq.RCVHWM, self.rcvhwm)
+        self.device.setsockopt_out(zmq.SNDHWM, self.outhwm)
         self.device.bind_in(endpoint)
         self.device.bind_out("ipc:///tmp/decin" + seed)
+        
+        
         self.decoder = Decoder(context, seed=seed, rcvmeta=True)
 
     def handler(self):

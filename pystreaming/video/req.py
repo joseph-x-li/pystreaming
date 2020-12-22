@@ -5,7 +5,6 @@ import multiprocessing as mp
 async def aioreq(context, source, track, drain):
     socket = context.socket(zmq.REQ)
     socket.connect(source)
-    print(f"Requesting from {source}")
     while True:
         # rate limit to 30x a second => 90x requests a sec by default
         await asyncio.sleep(1 / 30)
@@ -25,9 +24,10 @@ async def stop(shutdown):
             raise StopAsyncIteration()
 
 
-def aiomain(source, track, outfd, procs, shutdown):
+def aiomain(source, track, outfd, procs, shutdown, outhwm):
     context = zmq.asyncio.Context()
     drain = context.socket(zmq.PUSH)
+    drain.setsockopt(zmq.SNDHWM, outhwm)
     drain.bind(outfd)
     args = [aioreq(context, source, track, drain) for _ in range(procs)]
     args.append(stop(shutdown))
@@ -38,15 +38,15 @@ def aiomain(source, track, outfd, procs, shutdown):
         loop.stop()
         context.destroy(linger=0)
         loop.close()
-    print("Exiting Requester")
 
 
 class Requester:
+    outhwm = 10
     def __init__(self, source, seed="", track="none", procs=3):
-        outfd = "ipc:///tmp/decin" + seed
+        self.outfd = "ipc:///tmp/decin" + seed
         self.source, self.procs, self.track = source, procs, track
         self.shutdown = mp.Event()
-        self.psargs = (self.source, self.track, outfd, self.procs, self.shutdown)
+        self.psargs = (self.source, self.track, self.outfd, self.procs, self.shutdown, self.outhwm)
         self.ps = None
 
     def start(self):
@@ -54,9 +54,8 @@ class Requester:
             raise RuntimeError("Tried to start a runnning AIOREQ obj")
         self.ps = mp.Process(target=aiomain, args=self.psargs)
         self.ps.daemon = True
-        print("RIGHT")
         self.ps.start()
-        print("LEFT")
+        print(self)
 
     def stop(self):
         if self.ps is None:
@@ -65,3 +64,13 @@ class Requester:
         self.ps.join()
         self.ps = None
         self.shutdown.clear()
+
+    def __repr__(self):
+        rpr = ""
+        rpr += "-----Requester-----\n"
+        rpr += f"THD:\t{self.procs}\n"
+        rpr += f"TRACK:\t{self.track}\n"
+        rpr += f"IN:\t{self.source}\n"
+        rpr += f"OUT:\t{self.outfd}\n"
+        rpr += f"HWM:\t=IN> XX)::({self.outhwm} =OUT> "
+        return rpr

@@ -6,7 +6,6 @@ import multiprocessing as mp
 
 
 def dec_ps(shutdown, infd, outfd, rcvmeta, sndbuf, rcvhwm, outhwm):
-    print("Starting Decoder")
     context = zmq.Context()
 
     socket = context.socket(zmq.PULL)
@@ -37,23 +36,21 @@ def dec_ps(shutdown, infd, outfd, rcvmeta, sndbuf, rcvhwm, outhwm):
             except zmq.error.Again:
                 pass  # ignore send misses to out.
 
-    print("Stopping Decoder")
-
 
 class Decoder:
     hearhwm = 30
     rcvhwm = outhwm = 10
 
     def __init__(self, context, seed="", rcvmeta=False, sndbuf=False, procs=2):
-        infd = "ipc:///tmp/decin" + seed
-        outfd = "ipc:///tmp/decout" + seed
+        self.infd = "ipc:///tmp/decin" + seed
+        self.outfd = "ipc:///tmp/decout" + seed
         self.context, self.procs = context, procs
         self.rcvmeta, self.sndbuf = rcvmeta, sndbuf
         self.shutdown = mp.Event()
         self.psargs = (
             self.shutdown,
-            infd,
-            outfd,
+            self.infd,
+            self.outfd,
             rcvmeta,
             sndbuf,
             self.rcvhwm,
@@ -62,7 +59,8 @@ class Decoder:
         self.workers = []
 
         self.receiver = self.context.socket(zmq.PULL)
-        self.receiver.bind(outfd)
+        self.receiver.setsockopt(zmq.RCVHWM, self.hearhwm)
+        self.receiver.bind(self.outfd)
 
     def recv(self):
         if self.workers == []:
@@ -86,6 +84,7 @@ class Decoder:
             ps.start()
 
         time.sleep(2)  # allow workers to initialize
+        print(self)
 
     def stop(self):
         if self.workers == []:
@@ -96,3 +95,12 @@ class Decoder:
             ps.join()
         self.workers = []
         self.shutdown.clear()
+
+    def __repr__(self):
+        rpr = ""
+        rpr += f"-----Decoder-----\n"
+        rpr += f"PCS: \t{self.procs}\n"
+        rpr += f"IN: \t{self.infd}\n"
+        rpr += f"OUT: \t{self.outfd}\n"
+        rpr += f"HWM: \t=IN> {self.rcvhwm})::({self.outhwm} =OUT> {self.hearhwm})"
+        return rpr

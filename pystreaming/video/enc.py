@@ -11,7 +11,6 @@ QUALITY = 50
 
 
 def enc_ps(shutdown, infd, outfd, rcvhwm, outhwm):
-    print("Starting Encoder")
     context = zmq.Context()
 
     socket = context.socket(zmq.PULL)
@@ -42,7 +41,6 @@ def enc_ps(shutdown, infd, outfd, rcvhwm, outhwm):
                 # Should not happen if there is a distributor.
                 # Could implement a signal that there is a distributor. Not strictly necessary tho.
                 pass
-    print("Stopping Encoder")
 
 
 class Encoder:
@@ -50,17 +48,17 @@ class Encoder:
     rcvhwm = outhwm = 10
 
     def __init__(self, context, seed="", procs=2):
-        infd = "ipc:///tmp/encin" + seed
-        outfd = "ipc:///tmp/encout" + seed
+        self.infd = "ipc:///tmp/encin" + seed
+        self.outfd = "ipc:///tmp/encout" + seed
         self.context, self.procs = context, procs
         self.shutdown = mp.Event()
-        self.psargs = (self.shutdown, infd, outfd, self.rcvhwm, self.outhwm)
+        self.psargs = (self.shutdown, self.infd, self.outfd, self.rcvhwm, self.outhwm)
         self.workers = []
         self.idx = 0
 
         self.sender = self.context.socket(zmq.PUSH)
         self.sender.setsockopt(zmq.SNDHWM, self.tellhwm)
-        self.sender.bind(infd)
+        self.sender.bind(self.infd)
 
     def send(self, frame):
         if self.workers == []:
@@ -85,6 +83,7 @@ class Encoder:
             ps.start()
 
         time.sleep(2)  # Allow workers to spin up
+        print(self)
 
     def stop(self):
         """Stop a pool of encoders.
@@ -115,3 +114,12 @@ class Encoder:
             print(i)
             self.send(storage[i % 360] if animated else storage)
             time.sleep(1 / 30)
+
+    def __repr__(self):
+        rpr = ""
+        rpr += f"-----Encoder-----\n"
+        rpr += f"PCS: \t{self.procs}\n"
+        rpr += f"IN: \t{self.infd}\n"
+        rpr += f"OUT: \t{self.outfd}\n"
+        rpr += f"HWM: \t({self.tellhwm} =IN> {self.rcvhwm})::({self.outhwm} =OUT> "
+        return rpr

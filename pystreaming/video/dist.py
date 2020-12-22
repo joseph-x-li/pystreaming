@@ -8,7 +8,6 @@ from pystreaming.listlib.circularlist import CircularList, Empty
 
 
 def dist_ps(shutdown, infd, endpt, rcvhwm, tracks):
-    print(f"Start Distributing to {endpt}")
     context = zmq.Context()
 
     collector = context.socket(zmq.PULL)
@@ -39,25 +38,26 @@ def dist_ps(shutdown, infd, endpt, rcvhwm, tracks):
             except (KeyError, Empty):  # no frames available or wrong track selected
                 intf.send(distributor, -1, buf=b"nil", flags=zmq.NOBLOCK)
 
-    print("Distributor stopped")
 
 
 class Distributor:
     rcvhwm = 30
 
     def __init__(self, endpoint, seed="", tracks=None):
-        infd = "ipc:///tmp/encout" + seed
+        self.infd = "ipc:///tmp/encout" + seed
+        self.endpoint, self.tracks = endpoint, tracks
         self.shutdown = mp.Event()
         self.ps = None
-        self.psargs = (self.shutdown, infd, endpoint, self.rcvhwm, tracks)
+        self.psargs = (self.shutdown, self.infd, self.endpoint, self.rcvhwm, tracks)
 
     def start(self):
         if self.ps is not None:
             raise RuntimeError("Tried to start a runnning Distributor")
-
+        
         self.ps = mp.Process(target=dist_ps, args=self.psargs)
         self.ps.daemon = True
         self.ps.start()
+        print(self)
 
     def stop(self):
         if self.ps is None:
@@ -67,3 +67,12 @@ class Distributor:
         self.ps.join()
         self.ps = None
         self.shutdown.clear()
+
+    def __repr__(self):
+        rpr = ""
+        rpr += f"-----Distributor-----\n"
+        rpr += f"TRACK: \t{self.tracks}\n"
+        rpr += f"IN: \t{self.infd}\n"
+        rpr += f"OUT: \t{self.endpoint}\n"
+        rpr += f"HWM: \t=IN> {self.rcvhwm})::(XX =OUT> "
+        return rpr

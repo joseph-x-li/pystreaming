@@ -143,6 +143,6 @@ if __name__ == "__main__":
     # encdistmain(getstandcam(gst=True))
     # encdistmain(None)
     # recvmain()
-    streampattern(FakeCam())
+    # streampattern(FakeCam())
     # workerpattern()
-    # collectorpattern()
+    collectorpattern()
