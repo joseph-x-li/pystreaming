@@ -2,7 +2,7 @@ from turbojpeg import TurboJPEG, TJSAMP_420, TJFLAG_FASTDCT, TJFLAG_FASTUPSAMPLE
 from turbojpeg import TurboJPEG, TJFLAG_FASTDCT, TJFLAG_FASTUPSAMPLE
 import numpy as np
 from functools import partial
-import cv2, blosc
+import cv2
 from pystreaming.video.testimages.imageloader import loadimage
 
 frame = np.asarray(loadimage(5))
