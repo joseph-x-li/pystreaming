@@ -23,12 +23,12 @@ def loadimage(enum):
 
     Args:
         enum (int): One of
-        pystreaming.TEST_S
-        pystreaming.TEST_M
-        pystreaming.TEST_L
-        pystreaming.IMAG_S
-        pystreaming.IMAG_M
-        pystreaming.IMAG_L
+            pystreaming.TEST_S
+            pystreaming.TEST_M
+            pystreaming.TEST_L
+            pystreaming.IMAG_S
+            pystreaming.IMAG_M
+            pystreaming.IMAG_L
 
     Raises:
         IndexError: Raised when received enum is not defined.

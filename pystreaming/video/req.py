@@ -79,7 +79,7 @@ class Requester:
         print(self)
 
     def stop(self):
-        """Join and asyncio requester threads.
+        """Join and destroy asyncio requester threads.
 
         Raises:
             RuntimeError: Raised when method is called while a Requester is stopped.
