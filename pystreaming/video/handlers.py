@@ -2,8 +2,16 @@ import cv2
 from pystreaming.listlib.circulardict import CircularOrderedDict
 
 # handler (generator): Any object that yields frames.
-def display(handler, BGR=True):
-    for frame, idx in handler:
+def display(handler, BGR=True, getter=None):
+    """Yield frames from a generator and display using OpenCV.
+
+    Args:
+        handler (generator): Generator that yields data.
+        BGR (bool, optional): False if frame is RGB format. Defaults to True.
+        getter (function, optional): Returns the frame from the return type of handler. Defaults to None.
+    """
+    for data in handler:
+        frame = data if getter is None else getter(data)
         if not BGR:
             frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
         cv2.imshow("pystreaming-display", frame)
@@ -11,10 +19,21 @@ def display(handler, BGR=True):
             break
 
 
-def collate(handler, buffer=10):
-    initsize = buffer * 1.2
-    collate = CircularOrderedDict(int(initsize))
-    for frame, idx in handler:
+def collate(handler, buffer=10, getter=None):
+    """Reorder frames that are mixed in transit.
+
+    Args:
+        handler (generator): Generator that yields data.
+        buffer (int, optional): Size of collate buffer. Defaults to 10.
+        getter (function, optional): Returns (frame, idx) from the return type of handler. Defaults to None.
+
+    Yields:
+        tuple(np.ndarray, int): (frame, idx)
+    """
+    initsize = int(buffer * 1.2)
+    collate = CircularOrderedDict(initsize)
+    for data in handler:
+        frame, idx = data if getter is None else getter(data)
         if idx == 0:  # Restart collate if stream restart occurs
             collate = CircularOrderedDict(initsize)
         collate.insert_end(idx, frame)

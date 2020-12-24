@@ -7,12 +7,24 @@ from zmq.devices import ProcessDevice
 
 class Streamer:
     def __init__(self, context, endpoint, procs=2):
+        """Bare-bones map-enabled streamer
+
+        Args:
+            context (zmq.Context): Zmq context of calling thread.
+            endpoint (str): Descriptor of stream endpoint.
+            procs (int, optional): Number of processes devoted to encoding. Defaults to 2.
+        """
         seed = uuid.uuid1().hex
         self.encoder = Encoder(context, seed=seed, procs=procs)
         self.distributor = Distributor(endpoint, seed=seed)
         self.started = False
 
     def start(self):
+        """Start internal pystreaming objects.
+
+        Raises:
+            RuntimeError: Raised when method is called while Streamer is running.
+        """
         if self.started:
             raise RuntimeError("Tried to start a started Streamer")
         self.started = True
@@ -20,6 +32,11 @@ class Streamer:
         self.distributor.start()
 
     def stop(self):
+        """Cleanup and stop interal pystreaming objects.
+
+        Raises:
+            RuntimeError: Raised when method is called while the Streamer is stopped.
+        """
         if not self.started:
             raise RuntimeError("Tried to stop a stopped Streamer")
         self.started = False
@@ -27,11 +44,20 @@ class Streamer:
         self.distributor.stop()
 
     def send(self, frame):
+        """Send a video frame into the stream.
+
+        Args:
+            frame (np.ndarray): Video frame
+
+        Raises:
+            RuntimeError: Raised when method is called while the Streamer is running.
+        """
         if not self.started:
             raise RuntimeError("Start the Streamer before sending frames")
         self.encoder.send(frame)
 
-    def testsignal(self):
+    def _testsignal(self):
+        """Send a test signal through the stream. This method blocks."""
         if not self.started:
             self.start()
         self.encoder._testcard(pystreaming.TEST_M)
@@ -41,6 +67,16 @@ class Worker:
     outhwm = 30
 
     def __init__(self, context, source, drain, track="none", reqprocs=3, decprocs=2):
+        """[summary]
+
+        Args:
+            context (zmq.Context): Zmq context of calling thread.
+            source (str): Descriptor of map-enabled stream.
+            drain (str): Descriptor of Collector.
+            track (str, optional): Video stream track name. Defaults to "none".
+            reqprocs (int, optional): Number of request threads. Defaults to 3.
+            decprocs (int, optional): Number of decoder processes. Defaults to 2.
+        """
         seed = uuid.uuid1().hex
         self.requester = Requester(source, seed=seed, track=track, procs=reqprocs)
         self.decoder = Decoder(context, seed=seed, sndbuf=True, procs=decprocs)
@@ -49,6 +85,11 @@ class Worker:
         self.drain.connect(drain)
 
     def run(self, func):
+        """Run map-enabled worker.
+
+        Args:
+            func (function): Stream-mapped function.
+        """
         try:
             self.decoder.start()
             self.requester.start()
@@ -68,8 +109,14 @@ class Worker:
 class Collector:
     rcvhwm = 30
     outhwm = 30
-    
+
     def __init__(self, context, endpoint):
+        """Collect frames from mapped video stream.
+
+        Args:
+            context (zmq.Context): Zmq context of calling thread.
+            endpoint (str): Descriptor of colleciton endpoint.
+        """
         seed = uuid.uuid1().hex
         # https://het.as.utexas.edu/HET/Software/pyZMQ/api/zmq.devices.html#zmq.devices.ProcessDevice
         self.device = ProcessDevice(zmq.STREAMER, zmq.PULL, zmq.PUSH)
@@ -77,11 +124,15 @@ class Collector:
         self.device.setsockopt_out(zmq.SNDHWM, self.outhwm)
         self.device.bind_in(endpoint)
         self.device.bind_out("ipc:///tmp/decin" + seed)
-        
-        
+
         self.decoder = Decoder(context, seed=seed, rcvmeta=True)
 
     def handler(self):
-        self.device.start()
+        """Returns a handler that is used for future data handling.
+
+        Returns:
+            generator: Generator that yields [arr, buf, meta, idx].
+        """
         self.decoder.start()
+        self.device.start()
         return self.decoder.handler()

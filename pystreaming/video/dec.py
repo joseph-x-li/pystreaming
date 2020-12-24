@@ -42,6 +42,15 @@ class Decoder:
     rcvhwm = outhwm = 10
 
     def __init__(self, context, seed="", rcvmeta=False, sndbuf=False, procs=2):
+        """Create a multiprocessing frame decoder object.
+
+        Args:
+            context (zmq.Context): Zmq context of calling thread.
+            seed (str, optional): File descriptor seed (to prevent ipc collisions). Defaults to "".
+            rcvmeta (bool, optional): True if we expect to receive metadata. Defaults to False.
+            sndbuf (bool, optional): True if we forward the compressed frame. Defaults to False.
+            procs (int, optional): Number of decoding processes. Defaults to 2.
+        """
         self.infd = "ipc:///tmp/decin" + seed
         self.outfd = "ipc:///tmp/decout" + seed
         self.context, self.procs = context, procs
@@ -63,18 +72,39 @@ class Decoder:
         self.receiver.bind(self.outfd)
 
     def recv(self):
+        """Receive a package of data from the decoder pool
+
+        Raises:
+            RuntimeError: Raised when method is called while a Decoder is stopped.
+
+        Returns:
+            list: Either [arr, buf, meta, idx] or [arr, buf, idx]
+        """
         if self.workers == []:
             raise RuntimeError("Tried to receive frame from stopped Decoder")
         # Add timeout function?
         return intf.recv(self.receiver, arr=True, buf=self.sndbuf, meta=self.rcvmeta)
 
     def handler(self):
+        """Yield a package of data from the decoder pool
+
+        Raises:
+            RuntimeError: Raised when method is called while a Decoder is stopped.
+
+        Yields:
+            list: Either [arr, buf, meta, idx] or [arr, buf, idx]
+        """
         if self.workers == []:
             raise RuntimeError("Cannot produce stream handler from stopped Decoder")
         while True:
             yield intf.recv(self.receiver, arr=True, buf=self.sndbuf, meta=self.rcvmeta)
 
     def start(self):
+        """Create and start multiprocessing decoder threads.
+
+        Raises:
+            RuntimeError: Raised when method is called while a Decoder is running.
+        """
         if self.workers != []:
             raise RuntimeError("Tried to start running Decoder")
         for _ in range(self.procs):
@@ -87,6 +117,11 @@ class Decoder:
         print(self)
 
     def stop(self):
+        """Join and destroy multiprocessing decoder threads.
+
+        Raises:
+            RuntimeError: Raised when method is called while a Decoder is stopped.
+        """
         if self.workers == []:
             raise RuntimeError("Tried to stop stopped Decoder")
 

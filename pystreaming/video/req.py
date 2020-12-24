@@ -42,24 +42,50 @@ def aiomain(source, track, outfd, procs, shutdown, outhwm):
 
 class Requester:
     outhwm = 10
+
     def __init__(self, source, seed="", track="none", procs=3):
+        """[summary]
+
+        Args:
+            source (str): Descriptor of stream endpoint.
+            seed (str, optional): File descriptor seed (to prevent ipc collisions). Defaults to "".
+            track (str, optional): Video stream track name. Defaults to "none".
+            procs (int, optional): Number of requester threads. Defaults to 3.
+        """
         self.outfd = "ipc:///tmp/decin" + seed
         self.source, self.procs, self.track = source, procs, track
         self.shutdown = mp.Event()
-        self.psargs = (self.source, self.track, self.outfd, self.procs, self.shutdown, self.outhwm)
+        self.psargs = (
+            self.source,
+            self.track,
+            self.outfd,
+            self.procs,
+            self.shutdown,
+            self.outhwm,
+        )
         self.ps = None
 
     def start(self):
+        """Create and start asyncio requester threads.
+
+        Raises:
+            RuntimeError: Raised when method is called while a Requester is running.
+        """
         if self.ps is not None:
-            raise RuntimeError("Tried to start a runnning AIOREQ obj")
+            raise RuntimeError("Tried to start a runnning Requester obj")
         self.ps = mp.Process(target=aiomain, args=self.psargs)
         self.ps.daemon = True
         self.ps.start()
         print(self)
 
     def stop(self):
+        """Join and asyncio requester threads.
+
+        Raises:
+            RuntimeError: Raised when method is called while a Requester is stopped.
+        """
         if self.ps is None:
-            raise RuntimeError("Tried to stop a stopped AIOREQ obj")
+            raise RuntimeError("Tried to stop a stopped Requester obj")
         self.shutdown.set()
         self.ps.join()
         self.ps = None

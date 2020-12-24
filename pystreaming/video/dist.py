@@ -39,11 +39,17 @@ def dist_ps(shutdown, infd, endpt, rcvhwm, tracks):
                 intf.send(distributor, -1, buf=b"nil", flags=zmq.NOBLOCK)
 
 
-
 class Distributor:
     rcvhwm = 30
 
     def __init__(self, endpoint, seed="", tracks=None):
+        """Create a multiprocessing frame distributor object.
+
+        Args:
+            endpoint (str): Descriptor of distributor endpoint.
+            seed (str, optional): File descriptor seed (to prevent ipc collisions). Defaults to "".
+            tracks (list, optional): List of strings, where each string describes a track. Defaults to None.
+        """
         self.infd = "ipc:///tmp/encout" + seed
         self.endpoint, self.tracks = endpoint, tracks
         self.shutdown = mp.Event()
@@ -51,15 +57,25 @@ class Distributor:
         self.psargs = (self.shutdown, self.infd, self.endpoint, self.rcvhwm, tracks)
 
     def start(self):
+        """Create and start a multiprocessing distributor thread.
+
+        Raises:
+            RuntimeError: Raised when method is called while a Distributor is running.
+        """
         if self.ps is not None:
             raise RuntimeError("Tried to start a runnning Distributor")
-        
+
         self.ps = mp.Process(target=dist_ps, args=self.psargs)
         self.ps.daemon = True
         self.ps.start()
         print(self)
 
     def stop(self):
+        """Join and destroy the multiprocessing distributor thread.
+
+        Raises:
+            RuntimeError: Raised when method is called while a Distributor is stopped.
+        """
         if self.ps is None:
             raise RuntimeError("Tried to stop a stopped Distributor")
 

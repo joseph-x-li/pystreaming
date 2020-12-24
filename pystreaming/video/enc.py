@@ -48,6 +48,13 @@ class Encoder:
     rcvhwm = outhwm = 10
 
     def __init__(self, context, seed="", procs=2):
+        """Create a multiprocessing frame encoder object.
+
+        Args:
+            context (zmq.Context): Zmq context of calling thread.
+            seed (str, optional): File descriptor seed (to prevent ipc collisions). Defaults to "".
+            procs (int, optional): Number of encoding processes. Defaults to 2.
+        """
         self.infd = "ipc:///tmp/encin" + seed
         self.outfd = "ipc:///tmp/encout" + seed
         self.context, self.procs = context, procs
@@ -61,6 +68,15 @@ class Encoder:
         self.sender.bind(self.infd)
 
     def send(self, frame):
+        """Send a frame to the encoder bank
+
+        Args:
+            frame (np.ndarray): Video frame
+
+        Raises:
+            RuntimeError: Raised when method is called while a Encoder is stopped.
+            RuntimeError: Raised if encoder processes cannot compresss frame fast enough
+        """
         if self.workers == []:
             raise RuntimeError("Tried to send frame to stopped Encoder")
         try:
@@ -73,6 +89,11 @@ class Encoder:
             # If not responding, only then raise runtime error
 
     def start(self):
+        """Create and start multiprocessing encoder threads.
+
+        Raises:
+            RuntimeError: Raised when method is called while a Encoder is running.
+        """
         if self.workers != []:
             raise RuntimeError("Tried to start running Encoder")
         for _ in range(self.procs):
@@ -86,10 +107,10 @@ class Encoder:
         print(self)
 
     def stop(self):
-        """Stop a pool of encoders.
+        """Join and destroy multiprocessing encoder threads.
 
         Raises:
-            RuntimeError: Raised when the Encoder is already stopped
+            RuntimeError: Raised when method is called while a Encoder is stopped.
         """
         if self.workers == []:
             raise RuntimeError("Tried to stop stopped Encoder")
@@ -101,6 +122,18 @@ class Encoder:
         self.shutdown.clear()
 
     def _testcard(self, cardenum, animated=False):
+        """Display a testcard or a test image. This method is blocking.
+
+        Args:
+            cardenum (int): One of
+                pystreaming.TEST_S
+                pystreaming.TEST_M
+                pystreaming.TEST_L
+                pystreaming.IMAG_S
+                pystreaming.IMAG_M
+                pystreaming.IMAG_L
+            animated (bool, optional): Set True to make image rotate. Defaults to False.
+        """
         testimage = loadimage(cardenum)
         if self.workers == []:
             self.start()
