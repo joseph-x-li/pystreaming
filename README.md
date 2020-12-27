@@ -5,8 +5,6 @@
 [![PyPI version](https://badge.fury.io/py/pystreaming.svg)](https://badge.fury.io/py/pystreaming)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Documentation Status](https://readthedocs.org/projects/pystreaming/badge/?version=latest)](https://pystreaming.readthedocs.io/en/latest/?badge=latest)
-<!-- Build: Passing thing -->
-<!-- Docs: readthedocs sphinx -->
 <!-- Code Cov??? -->
 
 Easy streaming of video and audio using fast jpg compression. 

@@ -16,9 +16,7 @@ subprocess.call(["sh", "./docbuild.sh"])
 
 import os
 import sys
-this = os.path.abspath('..')
-print(this)
-sys.path.insert(0, this)
+sys.path.insert(0, os.path.abspath('..'))
 
 
 # -- Project information -----------------------------------------------------
@@ -38,9 +36,9 @@ version = release = open("../VERSION.txt").read().strip()
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
-    "sphinx.ext.coverage",
+    'sphinx.ext.coverage',
     'sphinx.ext.napoleon',
-    "sphinx.ext.viewcode"
+    'sphinx.ext.viewcode'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -53,6 +51,8 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 # Document __init__ instead of class docstring
 autoclass_content = 'init'
+
+autodoc_mock_imports = ["cv2", "zmq", "turbojpeg", "numpy"]
 
 
 # -- Options for HTML output -------------------------------------------------
