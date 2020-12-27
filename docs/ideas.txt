@@ -9,6 +9,7 @@ Getting Started:
         Solves real-time map-reducce video streaming problem.
         Can be used as a easy streaming service as well.
         Extremely easy to use.
+        Videoz
 
         5 line stream example
         >>> import pystreaming, cv2, zmq
@@ -23,3 +24,12 @@ Getting Started:
         >>> import zmq
         >>> stream = ps.Collector(zmq.Context(), "tcp://127.0.0.1:5555")
         >>> ps.display(ps.collate(stream.handler(), getter=lambda x : (x[0], x[3])), getter=lambda x : x[0])
+
+User Guide
+    - Simple P2P example
+
+    - Map-Reduce Inference Example
+
+    - Multi (Map-Reduce) Inference Example
+
+    - Using Handlers

@@ -44,7 +44,7 @@ class Requester:
     outhwm = 10
 
     def __init__(self, source, seed="", track="none", procs=3):
-        """[summary]
+        """Create a forked asyncio frame requester object.
 
         Args:
             source (str): Descriptor of stream endpoint.

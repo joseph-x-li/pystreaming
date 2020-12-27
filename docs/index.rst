@@ -3,14 +3,31 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to pystreaming's documentation!
-=======================================
+Pystreaming: A Python Package for Easy Video Streaming
+======================================================
+
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+   :maxdepth: 1
+   :caption: Getting Started
 
+   source/getting_started/installation
+   source/getting_started/overview
 
+.. toctree::
+   :maxdepth: 1
+   :caption: User Guide
+
+   source/guide/p2p
+   source/guide/mapreduce
+   source/guide/handlers
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Reference
+   
+   source/reference/API
+   
 
 Indices and tables
 ==================
