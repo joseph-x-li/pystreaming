@@ -52,7 +52,7 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # Document __init__ instead of class docstring
 autoclass_content = 'init'
 
-autodoc_mock_imports = ["cv2", "zmq", "turbojpeg", "numpy"]
+autodoc_mock_imports = ["cv2", "zmq", "turbojpeg", "numpy", "orderedset"]
 
 
 # -- Options for HTML output -------------------------------------------------
