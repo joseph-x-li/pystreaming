@@ -8,7 +8,6 @@ Basic API Interface
 -------------------
 
 .. autosummary::
-	:toctree: gen
 	:nosignatures: 
 	
 	pystreaming.video.patterns.Streamer
@@ -22,7 +21,6 @@ Internal API Interface
 ----------------------
 
 .. autosummary::
-	:toctree: gen
 	:nosignatures: 
 	
 	pystreaming.video.enc.Encoder

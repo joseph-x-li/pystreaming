@@ -13,13 +13,13 @@ def send(socket, idx, arr=None, buf=None, meta=None, flags=0):
         meta (pyobj, optional): Any reasonably small picklable object. Defaults to None.
         flags (int, optional): [description]. Defaults to 0.
     """
-    if not (arr is None):
+    if arr is not None:
         md = {"dtype": str(arr.dtype), "shape": arr.shape}
         socket.send_json(md, flags=zmq.SNDMORE | flags)
         socket.send(arr, copy=False, flags=zmq.SNDMORE | flags)
-    if not (buf is None):
+    if buf is not None:
         socket.send(buf, copy=False, flags=zmq.SNDMORE | flags)
-    if not (meta is None):
+    if meta is not None:
         socket.send_pyobj(meta, flags=zmq.SNDMORE | flags)
     socket.send_pyobj(idx, flags=flags)
 
