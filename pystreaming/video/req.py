@@ -11,10 +11,17 @@ async def aioreq(context, source, track, drain):
         await socket.send(bytes(track, "utf-8"))
         buf = await socket.recv()
         idx = await socket.recv_pyobj()
-        if idx == -1:
+        if idx == -2:
             continue  # throw away if no frame available
-        await drain.send(buf, copy=False, flags=zmq.SNDMORE)
-        await drain.send_pyobj(idx)
+        if idx == -3:
+            raise RuntimeError(
+                f'Track "{track}" was not recognized by the Distributor.'
+            )
+        try:
+            await drain.send(buf, copy=False, flags=zmq.SNDMORE | zmq.NOBLOCK)
+            await drain.send_pyobj(idx, flags=zmq.NOBLOCK)
+        except zmq.error.Again:
+            pass  # ignore send misses to drain.
 
 
 async def stop(shutdown):

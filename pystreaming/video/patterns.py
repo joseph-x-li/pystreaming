@@ -136,3 +136,55 @@ class Collector:
         self.decoder.start()
         self.device.start()
         return self.decoder.handler()
+
+
+# class Streamer:
+#     def __init__(self, context, endpoint, procs=2):
+#         """Bare-bones streamer
+
+#         Args:
+#             context (zmq.Context): Zmq context of calling thread.
+#             endpoint (str): Descriptor of stream endpoint.
+#             procs (int, optional): Number of processes devoted to encoding. Defaults to 2.
+#         """
+#         seed = uuid.uuid1().hex
+#         self.encoder = Encoder(context, seed=seed, procs=procs)
+#         self.publisher = Publisher(endpoint, seed=seed)
+#         self.started = False
+
+#     def start(self):
+#         """Start internal pystreaming objects.
+
+#         Raises:
+#             RuntimeError: Raised when method is called while Streamer is running.
+#         """
+#         if self.started:
+#             raise RuntimeError("Tried to start a started Streamer")
+#         self.started = True
+#         self.encoder.start()
+#         self.distributor.start()
+
+#     def stop(self):
+#         """Cleanup and stop interal pystreaming objects.
+
+#         Raises:
+#             RuntimeError: Raised when method is called while the Streamer is stopped.
+#         """
+#         if not self.started:
+#             raise RuntimeError("Tried to stop a stopped Streamer")
+#         self.started = False
+#         self.encoder.stop()
+#         self.distributor.stop()
+
+#     def send(self, frame):
+#         """Send a video frame into the stream.
+
+#         Args:
+#             frame (np.ndarray): Video frame
+
+#         Raises:
+#             RuntimeError: Raised when method is called while the Streamer is running.
+#         """
+#         if not self.started:
+#             raise RuntimeError("Start the Streamer before sending frames")
+#         self.encoder.send(frame)

@@ -1,5 +1,5 @@
 import time, zmq
-from pystreaming import Requester, Encoder, Distributor, Decoder
+from pystreaming import Requester, Encoder, Distributor, Decoder, Publisher
 
 def main():
     context = zmq.Context()
@@ -21,6 +21,11 @@ def main():
     x.stop()
     
     x = Decoder(context)
+    x.start()
+    time.sleep(1)
+    x.stop()
+    
+    x = Publisher("tcp://*:5556")
     x.start()
     time.sleep(1)
     x.stop()

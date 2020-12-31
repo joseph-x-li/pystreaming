@@ -10,7 +10,7 @@ import pystreaming.video.interface as intf
 QUALITY = 50
 
 
-def enc_ps(shutdown, infd, outfd, rcvhwm, outhwm):
+def enc_ps(shutdown, infd, outfd, rcvhwm, sndhwm):
     context = zmq.Context()
 
     socket = context.socket(zmq.PULL)
@@ -18,7 +18,7 @@ def enc_ps(shutdown, infd, outfd, rcvhwm, outhwm):
     socket.connect(infd)
 
     out = context.socket(zmq.PUSH)
-    out.setsockopt(zmq.SNDHWM, outhwm)
+    out.setsockopt(zmq.SNDHWM, sndhwm)
     out.connect(outfd)
 
     poller = zmq.Poller()
@@ -37,15 +37,12 @@ def enc_ps(shutdown, infd, outfd, rcvhwm, outhwm):
                 arr, idx = intf.recv(socket, arr=True, flags=zmq.NOBLOCK)
                 intf.send(out, idx, buf=encoder(arr), flags=zmq.NOBLOCK)
             except zmq.error.Again:
-                # ignore send misses to distributor.
-                # Should not happen if there is a distributor.
-                # Could implement a signal that there is a distributor. Not strictly necessary tho.
                 pass
 
 
 class Encoder:
-    tellhwm = 30
-    rcvhwm = outhwm = 10
+    inhwm = 30
+    rcvhwm = sndhwm = 10
 
     def __init__(self, context, seed="", procs=2):
         """Create a multiprocessing frame encoder object.
@@ -59,19 +56,19 @@ class Encoder:
         self.outfd = "ipc:///tmp/encout" + seed
         self.context, self.procs = context, procs
         self.shutdown = mp.Event()
-        self.psargs = (self.shutdown, self.infd, self.outfd, self.rcvhwm, self.outhwm)
+        self.psargs = (self.shutdown, self.infd, self.outfd, self.rcvhwm, self.sndhwm)
         self.workers = []
         self.idx = 0
 
         self.sender = self.context.socket(zmq.PUSH)
-        self.sender.setsockopt(zmq.SNDHWM, self.tellhwm)
+        self.sender.setsockopt(zmq.SNDHWM, self.inhwm)
         self.sender.bind(self.infd)
 
     def send(self, frame):
-        """Send a frame to the encoder bank
+        """Send a frame to the encoder bank.
 
         Args:
-            frame (np.ndarray): Video frame
+            frame (np.ndarray): A frame of video.
 
         Raises:
             RuntimeError: Raised when method is called while a Encoder is stopped.
@@ -122,7 +119,8 @@ class Encoder:
         self.shutdown.clear()
 
     def _testcard(self, cardenum, animated=False):
-        """Display a testcard or a test image. This method is blocking.
+        """Display a testcard or a test image. Automatically starts the object
+        if not already started. This method is blocking.
 
         Args:
             cardenum (int): One of
@@ -154,5 +152,5 @@ class Encoder:
         rpr += f"PCS: \t{self.procs}\n"
         rpr += f"IN: \t{self.infd}\n"
         rpr += f"OUT: \t{self.outfd}\n"
-        rpr += f"HWM: \t({self.tellhwm} =IN> {self.rcvhwm})::({self.outhwm} =OUT> "
+        rpr += f"HWM: \t({self.inhwm} =IN> {self.rcvhwm})::({self.sndhwm} =OUT> "
         return rpr

@@ -1,7 +1,7 @@
 import cv2
 from pystreaming.listlib.circulardict import CircularOrderedDict
 
-# handler (generator): Any object that yields frames.
+
 def display(handler, BGR=True, getter=None):
     """Yield frames from a generator and display using OpenCV.
 

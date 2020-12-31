@@ -4,9 +4,6 @@ import pystreaming.video.interface as intf
 from pystreaming.listlib.circularlist import CircularList, Empty
 
 
-# Note. It might be better to implement this as a asyncio system?
-
-
 def dist_ps(shutdown, infd, endpt, rcvhwm, tracks):
     context = zmq.Context()
 
@@ -28,15 +25,17 @@ def dist_ps(shutdown, infd, endpt, rcvhwm, tracks):
         if collector.poll(0):  # returns 0 if no event, something else if there is
             buf, idx = intf.recv(collector, buf=True, flags=zmq.NOBLOCK)
             for fqueue in queues.values():
-                fqueue.push((buf, idx))  # add to buf queue
+                fqueue.push((buf, idx))  # add to every buf queue
 
         if distributor.poll(0):  # got frame req
             track = distributor.recv().decode()
             try:
                 buf, idx = queues[track].pop()
                 intf.send(distributor, idx, buf=buf, flags=zmq.NOBLOCK)
-            except (KeyError, Empty):  # no frames available or wrong track selected
-                intf.send(distributor, -1, buf=b"nil", flags=zmq.NOBLOCK)
+            except Empty:  # Regular frame miss
+                intf.send(distributor, -2, buf=b"nil", flags=zmq.NOBLOCK)
+            except KeyError:  # Track miss
+                intf.send(distributor, -3, buf=b"nil", flags=zmq.NOBLOCK)
 
 
 class Distributor:

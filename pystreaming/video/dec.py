@@ -1,11 +1,13 @@
 from turbojpeg import TurboJPEG, TJFLAG_FASTDCT, TJFLAG_FASTUPSAMPLE
 import zmq, time
 from functools import partial
-import pystreaming.video.interface as intf
 import multiprocessing as mp
+import pystreaming.video.interface as intf
+
+# Status: Finished.
 
 
-def dec_ps(shutdown, infd, outfd, rcvmeta, sndbuf, rcvhwm, outhwm):
+def dec_ps(shutdown, infd, outfd, rcvmeta, sndbuf, rcvhwm, sndhwm):
     context = zmq.Context()
 
     socket = context.socket(zmq.PULL)
@@ -13,7 +15,7 @@ def dec_ps(shutdown, infd, outfd, rcvmeta, sndbuf, rcvhwm, outhwm):
     socket.connect(infd)
 
     out = context.socket(zmq.PUSH)
-    out.setsockopt(zmq.SNDHWM, outhwm)
+    out.setsockopt(zmq.SNDHWM, sndhwm)
     out.connect(outfd)
 
     poller = zmq.Poller()
@@ -25,21 +27,28 @@ def dec_ps(shutdown, infd, outfd, rcvmeta, sndbuf, rcvhwm, outhwm):
         if poller.poll(0):
             try:
                 package = intf.recv(socket, buf=True, meta=rcvmeta, flags=zmq.NOBLOCK)
+
+                # Handle receiving meta
                 if rcvmeta:
                     buf, meta, idx = package
                 else:
                     buf, idx = package
                     meta = None
+
                 arr = decoder(buf)
+
+                # Handle forwarding buffer
                 buf = buf if sndbuf else None
+
                 intf.send(out, idx, arr=arr, buf=buf, meta=meta, flags=zmq.NOBLOCK)
+
             except zmq.error.Again:
                 pass  # ignore send misses to out.
 
 
 class Decoder:
-    hearhwm = 30
-    rcvhwm = outhwm = 10
+    outhwm = 20
+    rcvhwm = sndhwm = 10
 
     def __init__(self, context, seed="", rcvmeta=False, sndbuf=False, procs=2):
         """Create a multiprocessing frame decoder object.
@@ -63,41 +72,54 @@ class Decoder:
             rcvmeta,
             sndbuf,
             self.rcvhwm,
-            self.outhwm,
+            self.sndhwm,
         )
         self.workers = []
+        self.receiver = None
 
-        self.receiver = self.context.socket(zmq.PULL)
-        self.receiver.setsockopt(zmq.RCVHWM, self.hearhwm)
-        self.receiver.bind(self.outfd)
+    def recv(self, timeout=60_000):
+        """Receive a package of data from the decoder pool.
 
-    def recv(self):
-        """Receive a package of data from the decoder pool
+        Args:
+            timeout (int, optional): Timeout period in milliseconds.
+            Set to None to block forever. Defaults to 60_000.
 
         Raises:
             RuntimeError: Raised when method is called while a Decoder is stopped.
+            TimeoutError: Raised when no messages are received in the timeout period.
 
         Returns:
             list: Either [arr, buf, meta, idx] or [arr, buf, idx]
         """
         if self.workers == []:
             raise RuntimeError("Tried to receive frame from stopped Decoder")
-        # Add timeout function?
-        return intf.recv(self.receiver, arr=True, buf=self.sndbuf, meta=self.rcvmeta)
+
+        if self.receiver is None:
+            self.receiver = self.context.socket(zmq.PULL)
+            self.receiver.setsockopt(zmq.RCVHWM, self.outhwm)
+            self.receiver.bind(self.outfd)
+
+        if self.receiver.poll(timeout):
+            return intf.recv(
+                self.receiver,
+                arr=True,
+                buf=self.sndbuf,
+                meta=self.rcvmeta,
+                flags=zmq.NOBLOCK,
+            )
+        else:
+            raise TimeoutError(
+                f"No messages were received within the timeout period {timeout}ms"
+            )
 
     def handler(self):
-        """Yield a package of data from the decoder pool
-
-        Raises:
-            RuntimeError: Raised when method is called while a Decoder is stopped.
+        """Yield a package of data from the decoder pool.
 
         Yields:
             list: Either [arr, buf, meta, idx] or [arr, buf, idx]
         """
-        if self.workers == []:
-            raise RuntimeError("Cannot produce stream handler from stopped Decoder")
         while True:
-            yield intf.recv(self.receiver, arr=True, buf=self.sndbuf, meta=self.rcvmeta)
+            yield self.recv()
 
     def start(self):
         """Create and start multiprocessing decoder threads.
@@ -113,7 +135,7 @@ class Decoder:
             ps.daemon = True
             ps.start()
 
-        time.sleep(2)  # allow workers to initialize
+        time.sleep(2)  # Allow workers to initialize
         print(self)
 
     def stop(self):
@@ -137,5 +159,5 @@ class Decoder:
         rpr += f"PCS: \t{self.procs}\n"
         rpr += f"IN: \t{self.infd}\n"
         rpr += f"OUT: \t{self.outfd}\n"
-        rpr += f"HWM: \t=IN> {self.rcvhwm})::({self.outhwm} =OUT> {self.hearhwm})"
+        rpr += f"HWM: \t=IN> {self.rcvhwm})::({self.sndhwm} =OUT> {self.outhwm})"
         return rpr
