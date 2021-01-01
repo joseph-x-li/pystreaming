@@ -7,7 +7,7 @@ from zmq.devices import ProcessDevice
 
 class Streamer:
     def __init__(self, context, endpoint, procs=2, mapreduce=False):
-        """Bare-bones map-enabled streamer
+        """Video streamer with P2P and Map-Reduce functionality.
 
         Args:
             context (zmq.Context): Zmq context of calling thread.
@@ -71,7 +71,7 @@ class Worker:
     outhwm = 30
 
     def __init__(self, context, source, drain, track="none", reqprocs=3, decprocs=2):
-        """[summary]
+        """Map pattern in the Map-Reduce streaming pattern.
 
         Args:
             context (zmq.Context): Zmq context of calling thread.
