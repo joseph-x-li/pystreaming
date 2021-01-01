@@ -1,4 +1,4 @@
-from pystreaming import Encoder, Distributor, Decoder, Requester
+from pystreaming import Encoder, Distributor, Decoder, Requester, Publisher, Subscriber
 import pystreaming.video.interface as intf
 import pystreaming
 import zmq, uuid
@@ -6,17 +6,21 @@ from zmq.devices import ProcessDevice
 
 
 class Streamer:
-    def __init__(self, context, endpoint, procs=2):
+    def __init__(self, context, endpoint, procs=2, mapreduce=False):
         """Bare-bones map-enabled streamer
 
         Args:
             context (zmq.Context): Zmq context of calling thread.
             endpoint (str): Descriptor of stream endpoint.
             procs (int, optional): Number of processes devoted to encoding. Defaults to 2.
+            mapreduce (bool, optional): Enable Map-Reduce streaming pattern. Defaults to False.
         """
         seed = uuid.uuid1().hex
         self.encoder = Encoder(context, seed=seed, procs=procs)
-        self.distributor = Distributor(endpoint, seed=seed)
+        if mapreduce:
+            self.distributor = Distributor(endpoint, seed=seed)
+        else:
+            self.distributor = Publisher(endpoint, seed=seed)
         self.started = False
 
     def start(self):
@@ -110,81 +114,62 @@ class Collector:
     rcvhwm = 30
     outhwm = 30
 
-    def __init__(self, context, endpoint):
-        """Collect frames from mapped video stream.
+    def __init__(self, context, endpoint, procs=2, mapreduce=False):
+        """Collect frames from  video stream.
 
         Args:
             context (zmq.Context): Zmq context of calling thread.
             endpoint (str): Descriptor of colleciton endpoint.
+            procs (int, optional): Number of processes devoted to decoding. Defaults to 2.
+            mapreduce (bool, optional): Enable Map-Reduce streaming pattern. Defaults to False.
         """
         seed = uuid.uuid1().hex
-        # https://het.as.utexas.edu/HET/Software/pyZMQ/api/zmq.devices.html#zmq.devices.ProcessDevice
-        self.device = ProcessDevice(zmq.STREAMER, zmq.PULL, zmq.PUSH)
-        self.device.setsockopt_in(zmq.RCVHWM, self.rcvhwm)
-        self.device.setsockopt_out(zmq.SNDHWM, self.outhwm)
-        self.device.bind_in(endpoint)
-        self.device.bind_out("ipc:///tmp/decin" + seed)
+        self.mapreduce = mapreduce
+        if mapreduce:
+            # https://het.as.utexas.edu/HET/Software/pyZMQ/api/zmq.devices.html#zmq.devices.ProcessDevice
+            self.device = ProcessDevice(zmq.STREAMER, zmq.PULL, zmq.PUSH)
+            self.device.setsockopt_in(zmq.RCVHWM, self.rcvhwm)
+            self.device.setsockopt_out(zmq.SNDHWM, self.outhwm)
+            self.device.bind_in(endpoint)
+            self.device.bind_out("ipc:///tmp/decin" + seed)
+        else:
+            self.device = Subscriber(endpoint, seed=seed)
 
-        self.decoder = Decoder(context, seed=seed, rcvmeta=True)
+        self.decoder = Decoder(context, procs=procs, seed=seed, rcvmeta=mapreduce)
+
+    def start(self):
+        """Start internal pystreaming objects.
+
+        Raises:
+            RuntimeError: Raised when method is called while Collector is running.
+        """
+        if self.started:
+            raise RuntimeError("Tried to start a started Collector")
+        self.started = True
+        self.decoder.start()
+        self.device.start()
 
     def handler(self):
         """Returns a handler that is used for future data handling.
 
         Returns:
-            generator: Generator that yields [arr, buf, meta, idx].
+            generator: Generator that yields [arr, meta, idx] if map-reduce else [arr, idx]
         """
-        self.decoder.start()
-        self.device.start()
+        if not self.started:
+            self.start()
         return self.decoder.handler()
 
+    def stop(self):
+        """Cleanup and stop interal pystreaming objects.
 
-# class Streamer:
-#     def __init__(self, context, endpoint, procs=2):
-#         """Bare-bones streamer
-
-#         Args:
-#             context (zmq.Context): Zmq context of calling thread.
-#             endpoint (str): Descriptor of stream endpoint.
-#             procs (int, optional): Number of processes devoted to encoding. Defaults to 2.
-#         """
-#         seed = uuid.uuid1().hex
-#         self.encoder = Encoder(context, seed=seed, procs=procs)
-#         self.publisher = Publisher(endpoint, seed=seed)
-#         self.started = False
-
-#     def start(self):
-#         """Start internal pystreaming objects.
-
-#         Raises:
-#             RuntimeError: Raised when method is called while Streamer is running.
-#         """
-#         if self.started:
-#             raise RuntimeError("Tried to start a started Streamer")
-#         self.started = True
-#         self.encoder.start()
-#         self.distributor.start()
-
-#     def stop(self):
-#         """Cleanup and stop interal pystreaming objects.
-
-#         Raises:
-#             RuntimeError: Raised when method is called while the Streamer is stopped.
-#         """
-#         if not self.started:
-#             raise RuntimeError("Tried to stop a stopped Streamer")
-#         self.started = False
-#         self.encoder.stop()
-#         self.distributor.stop()
-
-#     def send(self, frame):
-#         """Send a video frame into the stream.
-
-#         Args:
-#             frame (np.ndarray): Video frame
-
-#         Raises:
-#             RuntimeError: Raised when method is called while the Streamer is running.
-#         """
-#         if not self.started:
-#             raise RuntimeError("Start the Streamer before sending frames")
-#         self.encoder.send(frame)
+        Raises:
+            RuntimeError: Raised when method is called while the Collector is stopped.
+        """
+        if not self.started:
+            raise RuntimeError("Tried to stop a stopped Collector")
+        self.started = False
+        if self.mapreduce:
+            self.device.join()
+        else:
+            self.device.stop()
+        self.decoder.stop()
