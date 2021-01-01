@@ -116,11 +116,12 @@ def yielder(animated=True):
 
 def streampattern(cam):
     context = zmq.Context()
-    out = stream.Streamer(context, "tcp://*:5553")
-    out.start()
-    while True:
-        _, frame = cam.read()
-        out.send(frame)
+    out = stream.Streamer(context, "tcp://*:5553", mapreduce=True)
+    out._testsignal()
+    # out.start()
+    # while True:
+    #     _, frame = cam.read()
+    #     out.send(frame)
 
 
 def workerpattern():
@@ -132,7 +133,7 @@ def workerpattern():
     
 def collectorpattern():
     context = zmq.Context()
-    col = stream.Collector(context, "tcp://*:5554")
+    col = stream.Collector(context, "tcp://172.16.0.49:5553")
     for pack in col.handler():
         for item in pack:
             print(type(item))

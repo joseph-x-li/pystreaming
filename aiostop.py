@@ -30,7 +30,7 @@ def main():
     time.sleep(1)
     x.stop()
     
-    x = Subscriber("tcp://*:5557")
+    x = Subscriber("tcp://127.0.0.1:5557")
     x.start()
     time.sleep(1)
     x.stop()

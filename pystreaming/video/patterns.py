@@ -136,6 +136,7 @@ class Collector:
             self.device = Subscriber(endpoint, seed=seed)
 
         self.decoder = Decoder(context, procs=procs, seed=seed, rcvmeta=mapreduce)
+        self.started = False
 
     def start(self):
         """Start internal pystreaming objects.

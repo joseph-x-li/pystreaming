@@ -10,7 +10,7 @@ def subpush_ps(shutdown, infd, outfd, rcvhwm, sndhwm):
 
     socket = context.socket(zmq.SUB)
     socket.setsockopt(zmq.RCVHWM, rcvhwm)
-    socket.bind(infd)
+    socket.connect(infd)
     socket.subscribe("")  # subscribe to all topics
 
     out = context.socket(zmq.PUSH)
@@ -43,7 +43,7 @@ class Subscriber:
             seed (str, optional): File descriptor seed (to prevent ipc collisions). Defaults to "".
         """
         self.infd = endpoint
-        self.outfd = "ipc:///tmp/encin" + seed
+        self.outfd = "ipc:///tmp/decin" + seed
         self.shutdown = mp.Event()
         self.psargs = (self.shutdown, self.infd, self.outfd, self.rcvhwm, self.sndhwm)
         self.ps = None
