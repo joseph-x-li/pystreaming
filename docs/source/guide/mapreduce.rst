@@ -34,17 +34,18 @@ An example custom handler is provided as an example. It simply prints the type o
             print(type(data[1]))
             yield data
 
+    def runner(handler):
+        for _ in handler:
+            pass
+
     from pystreaming import Collector, collate, display
     import zmq
     stream = Collector(zmq.Context(), "tcp://*:5556", mapreduce=True)
-    display(
-        customhandler(
-            collate(
-                stream.handler(), 
-            ),
+    runner(customhandler(
+        collate(
+            stream.handler(), 
         ),
-        getter=lambda x : x[0],
-    )
+    ))
 
 Worker computers connect to the streaming and the collection servers.
 
