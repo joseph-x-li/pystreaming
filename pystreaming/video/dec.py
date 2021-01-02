@@ -89,7 +89,7 @@ class Decoder:
             TimeoutError: Raised when no messages are received in the timeout period.
 
         Returns:
-            list: Either [arr, buf, meta, idx] or [arr, buf, idx]
+            list: Either [arr, buf, meta, idx] or [arr, buf, idx] or [arr, meta, idx] or [arr, idx]
         """
         if self.workers == []:
             raise RuntimeError("Tried to receive frame from stopped Decoder")

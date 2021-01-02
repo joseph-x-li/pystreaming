@@ -60,10 +60,26 @@ pystreaming.video.patterns module
    :undoc-members:
    :show-inheritance:
 
+pystreaming.video.pub module
+----------------------------
+
+.. automodule:: pystreaming.video.pub
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 pystreaming.video.req module
 ----------------------------
 
 .. automodule:: pystreaming.video.req
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+pystreaming.video.sub module
+----------------------------
+
+.. automodule:: pystreaming.video.sub
    :members:
    :undoc-members:
    :show-inheritance:

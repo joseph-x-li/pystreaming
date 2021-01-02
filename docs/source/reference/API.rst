@@ -27,5 +27,7 @@ Internal API Interface
 	pystreaming.video.dec.Decoder
 	pystreaming.video.dist.Distributor
 	pystreaming.video.req.Requester
+	pystreaming.video.pub.Publisher
+	pystreaming.video.sub.Subscriber
     pystreaming.listlib.circularlist.CircularList
     pystreaming.listlib.circulardict.CircularOrderedDict

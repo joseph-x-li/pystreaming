@@ -5,13 +5,14 @@ Using Handlers
 
 When receiving a stream, pystreaming utilizes generators to hand computation between different stream handlers.
 
-Decoder handler
+The collector handler is used to access frames decoded in the Decoder.
+If the handler was created with M-R enabled, it yields [arr, meta, idx].
+If the handler was created with M-R disabled, it yields [arr, idx].
 
-collate handler usage
+The collate handler is used to sort frames in chronological order. It is suggested to place this immediately after the decoder handler.
 
-display handler
+The display handler takes a frame and displays it in a OpenCV window.
 
-getters
+Getters are used to handle different argument types between the handlers. A common example is using a getter for the display handler. 
 
-
-Defining a custom handler for your own usage (e.g, drawing boxes for object detection).
+You can define a custom handler for your own usage (e.g, drawing boxes for object detection).
