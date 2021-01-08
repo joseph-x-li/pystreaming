@@ -119,7 +119,7 @@ class Collector:
 
         Args:
             context (zmq.Context): Zmq context of calling thread.
-            endpoint (str): Descriptor of colleciton endpoint.
+            endpoint (str): Descriptor of collection endpoint.
             procs (int, optional): Number of processes devoted to decoding. Defaults to 2.
             mapreduce (bool, optional): Enable Map-Reduce streaming pattern. Defaults to False.
         """
@@ -169,8 +169,6 @@ class Collector:
         if not self.started:
             raise RuntimeError("Tried to stop a stopped Collector")
         self.started = False
-        if self.mapreduce:
-            self.device.join()
-        else:
+        if not self.mapreduce:
             self.device.stop()
         self.decoder.stop()
