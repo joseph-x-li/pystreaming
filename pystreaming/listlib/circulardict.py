@@ -64,11 +64,11 @@ class CircularOrderedDict:
         dictionary.
 
         Args:
-            key ([type]): [description]
-            value ([type]): [description]
+            key (pyobj): Key in the key-value pair.
+            value (pyobj): Value in key-value pair.
 
         Raises:
-            KeyError: [description]
+            KeyError: Key was not found in the dictionary.
         """
         if key not in self.dict:
             raise KeyError(key) + " use insert_end to add an element"

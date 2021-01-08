@@ -13,9 +13,15 @@ class CircularList:
 
         Args:
             maxsize (int, optional): Maximum number of elements the list
-            can store before it begins to overwrite old elements.
-            Defaults to 10.
+                can store before it begins to overwrite old elements.
+                Defaults to 10.
+
+        Raises:
+            ValueError: Raised if maxsize argument is not a positve integer.
         """
+        if maxsize <= 0:
+            raise ValueError("Maxsize must be greater than zero")
+        
         self._front = 0  # inclusive
         self._back = 0  # exclusive
         self.size = 0
