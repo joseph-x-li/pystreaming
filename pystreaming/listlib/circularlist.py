@@ -21,7 +21,7 @@ class CircularList:
         """
         if maxsize <= 0:
             raise ValueError("Maxsize must be greater than zero")
-        
+
         self._front = 0  # inclusive
         self._back = 0  # exclusive
         self.size = 0

@@ -1,7 +1,8 @@
 from pystreaming import Encoder, Distributor, Decoder, Requester, Publisher, Subscriber
 import pystreaming.video.interface as intf
 import pystreaming
-import zmq, uuid
+import zmq
+import uuid
 from zmq.devices import ProcessDevice
 
 
@@ -125,6 +126,7 @@ class Collector:
         """
         seed = uuid.uuid1().hex
         self.mapreduce = mapreduce
+        self.startedonce = False
         if mapreduce:
             # https://het.as.utexas.edu/HET/Software/pyZMQ/api/zmq.devices.html#zmq.devices.ProcessDevice
             self.device = ProcessDevice(zmq.STREAMER, zmq.PULL, zmq.PUSH)
@@ -148,7 +150,10 @@ class Collector:
             raise RuntimeError("Tried to start a started Collector")
         self.started = True
         self.decoder.start()
+        if self.startedonce and self.mapreduce:
+            return
         self.device.start()
+        self.startedonce = True
 
     def handler(self):
         """Returns a handler that is used for future data handling.

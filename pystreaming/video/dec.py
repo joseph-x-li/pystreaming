@@ -1,5 +1,6 @@
 from turbojpeg import TurboJPEG, TJFLAG_FASTDCT, TJFLAG_FASTUPSAMPLE
-import zmq, time
+import zmq
+import time
 from functools import partial
 import multiprocessing as mp
 import pystreaming.video.interface as intf
@@ -155,7 +156,7 @@ class Decoder:
 
     def __repr__(self):
         rpr = ""
-        rpr += f"-----Decoder-----\n"
+        rpr += "-----Decoder-----\n"
         rpr += f"PCS: \t{self.procs}\n"
         rpr += f"IN: \t{self.infd}\n"
         rpr += f"OUT: \t{self.outfd}\n"

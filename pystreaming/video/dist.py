@@ -1,4 +1,5 @@
-import zmq, time
+import zmq
+import time
 import multiprocessing as mp
 import pystreaming.video.interface as intf
 from pystreaming.listlib.circularlist import CircularList, Empty
@@ -85,7 +86,7 @@ class Distributor:
 
     def __repr__(self):
         rpr = ""
-        rpr += f"-----Distributor-----\n"
+        rpr += "-----Distributor-----\n"
         rpr += f"TRACK: \t{self.tracks}\n"
         rpr += f"IN: \t{self.infd}\n"
         rpr += f"OUT: \t{self.endpoint}\n"

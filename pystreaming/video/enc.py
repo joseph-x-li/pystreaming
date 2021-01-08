@@ -1,13 +1,13 @@
-from turbojpeg import TurboJPEG, TJSAMP_420, TJFLAG_FASTDCT, TJFLAG_FASTUPSAMPLE
+from turbojpeg import TurboJPEG, TJSAMP_420, TJFLAG_FASTDCT
 import numpy as np
-import zmq, time
+import zmq
+import time
 import multiprocessing as mp
 from functools import partial
 from itertools import count
 from pystreaming.video.testimages.imageloader import loadimage
 import pystreaming.video.interface as intf
-
-QUALITY = 50
+from pystreaming.video import QUALITY
 
 
 def enc_ps(shutdown, infd, outfd, rcvhwm, sndhwm):
@@ -148,7 +148,7 @@ class Encoder:
 
     def __repr__(self):
         rpr = ""
-        rpr += f"-----Encoder-----\n"
+        rpr += "-----Encoder-----\n"
         rpr += f"PCS: \t{self.procs}\n"
         rpr += f"IN: \t{self.infd}\n"
         rpr += f"OUT: \t{self.outfd}\n"

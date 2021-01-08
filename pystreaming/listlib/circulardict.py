@@ -71,7 +71,7 @@ class CircularOrderedDict:
             KeyError: Key was not found in the dictionary.
         """
         if key not in self.dict:
-            raise KeyError(key) + " use insert_end to add an element"
+            raise KeyError(str(key) + " use insert_end to add an element")
         self.dict[key] = value
 
     def __getitem__(self, key):

@@ -1,6 +1,5 @@
-from turbojpeg import TurboJPEG, TJSAMP_420, TJFLAG_FASTDCT, TJFLAG_FASTUPSAMPLE
-import numpy as np
-import zmq, time
+import zmq
+import time
 import multiprocessing as mp
 import pystreaming.video.interface as intf
 
@@ -75,7 +74,7 @@ class Publisher:
 
     def __repr__(self):
         rpr = ""
-        rpr += f"-----Publisher-----\n"
+        rpr += "-----Publisher-----\n"
         rpr += f"IN:\t{self.infd}\n"
         rpr += f"OUT:\t{self.outfd}\n"
         rpr += f"HWM:\t=IN> {self.rcvhwm})::({self.sndhwm} =OUT> "
