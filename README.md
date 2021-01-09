@@ -7,6 +7,8 @@
 [![Documentation Status](https://readthedocs.org/projects/pystreaming/badge/?version=latest)](https://pystreaming.readthedocs.io/en/latest/?badge=latest)
 <!-- Code Cov??? -->
 
+[Documentation](https://pystreaming.readthedocs.io/)
+
 Easy streaming of video and audio using fast jpg compression. 
 
 Designed for ease of installation: no ffmpeg, no gstreamer.
