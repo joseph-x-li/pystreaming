@@ -74,4 +74,37 @@ def testcircularlist():
 
 
 def testcirculardict():
-    ...
+    try:
+        cd = CircularOrderedDict(0)
+        assert False
+    except ValueError:
+        pass
+
+    cd = CircularOrderedDict(5)
+    cd.insert_end(1, 1)
+    cd.insert_end(2, 2)
+    cd.insert_end(3, 3)
+    cd.insert_end(4, 4)
+    assert len(cd) == 4
+    cd.insert_end(5, 5)
+    assert len(cd) == 5
+    cd.insert_end(6, 6)
+    assert len(cd) == 5
+
+    for k, i in zip(cd.keys(), range(2, 7)):
+        assert k == i
+
+    cd.insert_end(3, 100)
+    cd[2] = -100
+    assert cd[2] == -100
+
+    cd.delete(2)
+    assert len(cd) == 4
+    assert cd.pop_front() == (4, 4)
+    assert len(cd) == 3
+    assert cd.pop_front() == (5, 5)
+    assert len(cd) == 2
+    assert cd.pop_front() == (6, 6)
+    assert len(cd) == 1
+    assert cd.pop_front() == (3, 100)
+    assert len(cd) == 0

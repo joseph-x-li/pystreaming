@@ -8,7 +8,12 @@ class CircularOrderedDict:
 
         Args:
             maxsize (int): Maximum size of the dictionary.
+            
+        Raises:
+            ValueError: Raised if maxsize argument is not a positve integer.
         """
+        if maxsize <= 0:
+            raise ValueError("Maxsize must be greater than zero")
         self.dict = OrderedDict()
         self.maxsize = maxsize
 
