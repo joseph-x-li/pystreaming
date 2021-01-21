@@ -2,21 +2,32 @@ import zmq
 import zmq.asyncio
 import asyncio
 import multiprocessing as mp
+from pystreaming.video import STOPSTREAM, FRAMEMISS, TRACKMISS
+
+
+"""Stop on STOPSTREAM, or TRACKMISS
+Continue on FRAMEMISS
+Wait at most TIMEOUT for receiving a response?
+    have to use async poll for this behavior
+"""
 
 
 async def aioreq(context, source, track, drain):
     socket = context.socket(zmq.REQ)
     socket.connect(source)
+    track_bytes = bytes(track, "utf-8")
     while True:
-        # rate limit to 30x a second => 90x requests a sec by default
+        # rate limit to 30x a second => 90x requests a sec by default with 3 threads
         await asyncio.sleep(1 / 30)
-        await socket.send(bytes(track, "utf-8"))
+        await socket.send(track_bytes)
         buf = await socket.recv()
         idx = await socket.recv_pyobj()
-        if idx == -2:
+        if idx == STOPSTREAM:
+            raise StopAsyncIteration(f"Stop stream signal received... Exiting...")
+        if idx == FRAMEMISS:
             continue  # throw away if no frame available
-        if idx == -3:
-            raise RuntimeError(
+        if idx == TRACKMISS:
+            raise StopAsyncIteration(
                 f'Track "{track}" was not recognized by the Distributor.'
             )
         try:
