@@ -5,6 +5,7 @@ import pystreaming.video.interface as intf
 
 TIMESTEP = 0.01
 
+
 def subpush_ps(shutdown, infd, outfd, rcvhwm, sndhwm):
     context = zmq.Context()
 
@@ -21,17 +22,16 @@ def subpush_ps(shutdown, infd, outfd, rcvhwm, sndhwm):
     poller.register(socket, zmq.POLLIN)
 
     while not shutdown.is_set():
-        past = time.time()
+        target = time.time() + TIMESTEP
         if poller.poll(0):
             try:
                 buf, idx = intf.recv(socket, buf=True, flags=zmq.NOBLOCK)
                 intf.send(out, idx, buf=buf, flags=zmq.NOBLOCK)
             except zmq.error.Again:
                 pass  # Ignore misses to send out
-        missing = TIMESTEP + past - time.time()
+        missing = target - time.time()
         if missing > 0:
-            time.sleep(missing) # loop takes at minimum TIMESTEP seconds
-            
+            time.sleep(missing)  # loop takes at minimum TIMESTEP seconds
 
 
 class Subscriber:

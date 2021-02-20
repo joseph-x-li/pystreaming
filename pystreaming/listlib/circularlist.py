@@ -49,7 +49,7 @@ class CircularList:
         """Pop an element off FIFO (queue) style.
 
         Raises:
-            Empty: Raised when there are no elements in the queue
+            Empty: Raised when there are no elements in the queue.
 
         Returns:
             pyobj: The first element in the list.
@@ -73,7 +73,7 @@ class CircularList:
             idx (int): Index desired to be modified.
 
         Raises:
-            IndexError: Raise if the index is out of range
+            IndexError: Raise if the index is out of range.
 
         Returns:
             pyobj: The object desired.
@@ -91,7 +91,7 @@ class CircularList:
             new_val (pyobj): New object to emplace.
 
         Raises:
-            IndexError: Raise if the index is out of range
+            IndexError: Raise if the index is out of range.
         """
         if idx >= self.size or idx < 0:
             raise IndexError(f"list index {idx} out of range: [0, {self.size})")
@@ -101,9 +101,9 @@ class CircularList:
         return self._array.__repr__() + f" front: {self._front} back: {self._back}"
 
     def full(self):
-        """Check whether the current list size is the maximum size
+        """Check whether the current list size is the maximum size.
 
         Returns:
-            boolean: True if full else False
+            boolean: True if full else False.
         """
         return self.size == self.maxsize

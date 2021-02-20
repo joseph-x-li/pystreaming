@@ -1,4 +1,6 @@
 import cv2
+import time
+from collections import deque
 from pystreaming.listlib.circulardict import CircularOrderedDict
 
 
@@ -7,8 +9,9 @@ def display(handler, BGR=True, getter=None):
 
     Args:
         handler (generator): Generator that yields data.
-        BGR (bool, optional): False if frame is RGB format. Defaults to True.
-        getter (function, optional): Returns the frame from the return type of handler. Defaults to None.
+        BGR (bool, optional): Set to False if frame is RGB format. Defaults to True.
+        getter (function, optional): Returns the frame from the return type of handler.
+            Defaults to None, which acts as an identity.
     """
     for data in handler:
         frame = data if getter is None else getter(data)
@@ -42,3 +45,23 @@ def collate(handler, buffer=10, getter=None):
             most_recent = min(collate.keys())
             yield collate[most_recent] + (most_recent,)
             collate.delete(most_recent)
+
+
+def dispfps(handler, n=100):
+    """Average iterations per second over last n iterations.
+
+    Args:
+        handler (generator): Generator that yields data.
+        n (int, optional): Number of iterations to average over. Defaults to 100.
+
+    Yields:
+        pyobj: Forwards data through handler
+    """
+    times = deque()
+    for data in handler:
+        end = time.time()
+        times.append(end)
+        if len(times) > n:
+            diff = end - times.popleft()
+            print(f"\rFPS: {(n / diff):.3f}", end="")
+        yield data

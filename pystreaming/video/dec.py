@@ -5,7 +5,7 @@ from functools import partial
 import multiprocessing as mp
 import pystreaming.video.interface as intf
 
-# Status: Finished.
+TIMESTEP = 0.01
 
 
 def dec_ps(shutdown, infd, outfd, rcvmeta, sndbuf, rcvhwm, sndhwm):
@@ -24,7 +24,7 @@ def dec_ps(shutdown, infd, outfd, rcvmeta, sndbuf, rcvhwm, sndhwm):
 
     decoder = partial(TurboJPEG().decode, flags=(TJFLAG_FASTDCT + TJFLAG_FASTUPSAMPLE))
     while not shutdown.is_set():
-        time.sleep(0.01)  # 100 cycles a sec
+        target = time.time() + TIMESTEP
         if poller.poll(0):
             try:
                 package = intf.recv(socket, buf=True, meta=rcvmeta, flags=zmq.NOBLOCK)
@@ -45,6 +45,10 @@ def dec_ps(shutdown, infd, outfd, rcvmeta, sndbuf, rcvhwm, sndhwm):
 
             except zmq.error.Again:
                 pass  # ignore send misses to out.
+
+        missing = target - time.time()
+        if missing > 0:
+            time.sleep(missing)
 
 
 class Decoder:
@@ -83,7 +87,7 @@ class Decoder:
 
         Args:
             timeout (int, optional): Timeout period in milliseconds.
-            Set to None to block forever. Defaults to 60_000.
+            Set to None to wait forever. Defaults to 60_000.
 
         Raises:
             RuntimeError: Raised when method is called while a Decoder is stopped.

@@ -3,6 +3,9 @@ import time
 import multiprocessing as mp
 import pystreaming.video.interface as intf
 from pystreaming.listlib.circularlist import CircularList, Empty
+from pystreaming.video import TRACKMISS, FRAMEMISS
+
+TIMESTEP = 0.001
 
 
 def dist_ps(shutdown, infd, endpt, rcvhwm, tracks):
@@ -20,9 +23,7 @@ def dist_ps(shutdown, infd, endpt, rcvhwm, tracks):
     queues = {track: CircularList() for track in tracks}
 
     while not shutdown.is_set():
-
-        time.sleep(0.001)  # 1000 cycles/sec ~> 4-6 streams at once.
-
+        target = time.time() + TIMESTEP
         if collector.poll(0):  # returns 0 if no event, something else if there is
             buf, idx = intf.recv(collector, buf=True, flags=zmq.NOBLOCK)
             for fqueue in queues.values():
@@ -34,9 +35,13 @@ def dist_ps(shutdown, infd, endpt, rcvhwm, tracks):
                 buf, idx = queues[track].pop()
                 intf.send(distributor, idx, buf=buf, flags=zmq.NOBLOCK)
             except Empty:  # Regular frame miss
-                intf.send(distributor, -2, buf=b"nil", flags=zmq.NOBLOCK)
+                intf.send(distributor, FRAMEMISS, buf=b"nil", flags=zmq.NOBLOCK)
             except KeyError:  # Track miss
-                intf.send(distributor, -3, buf=b"nil", flags=zmq.NOBLOCK)
+                intf.send(distributor, TRACKMISS, buf=b"nil", flags=zmq.NOBLOCK)
+
+        missing = target - time.time()
+        if missing > 0:
+            time.sleep(missing)
 
 
 class Distributor:

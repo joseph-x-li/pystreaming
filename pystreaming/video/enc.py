@@ -7,7 +7,9 @@ from functools import partial
 from itertools import count
 from pystreaming.video.testimages.imageloader import loadimage
 import pystreaming.video.interface as intf
-from pystreaming.video import QUALITY
+from pystreaming.video import QUALITY, STOPSTREAM
+
+TIMESTEP = 0.01
 
 
 def enc_ps(shutdown, infd, outfd, rcvhwm, sndhwm):
@@ -31,13 +33,16 @@ def enc_ps(shutdown, infd, outfd, rcvhwm, sndhwm):
         flags=TJFLAG_FASTDCT,
     )
     while not shutdown.is_set():
-        time.sleep(0.01)  # 100 cycles/sec
+        target = time.time() + TIMESTEP
         if poller.poll(0):
             try:
                 arr, idx = intf.recv(socket, arr=True, flags=zmq.NOBLOCK)
                 intf.send(out, idx, buf=encoder(arr), flags=zmq.NOBLOCK)
             except zmq.error.Again:
                 pass
+        missing = target - time.time()
+        if missing > 0:
+            time.sleep(missing)
 
 
 class Encoder:
@@ -68,7 +73,7 @@ class Encoder:
         """Send a frame to the encoder bank.
 
         Args:
-            frame (np.ndarray): A frame of video.
+            frame (np.ndarray): A frame of video. Send None to stop the stream.
 
         Raises:
             RuntimeError: Raised when method is called while a Encoder is stopped.
@@ -77,6 +82,12 @@ class Encoder:
         if self.workers == []:
             raise RuntimeError("Tried to send frame to stopped Encoder")
         try:
+            if frame is None:
+                intf.send(
+                    self.sender, STOPSTREAM, np.zeros((10, 10, 3)), flags=zmq.NOBLOCK
+                )
+                ...  # Initiate STOPSTREAM
+                return
             intf.send(self.sender, self.idx, arr=frame, flags=zmq.NOBLOCK)
             self.idx += 1
         except zmq.error.Again:

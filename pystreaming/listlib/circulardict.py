@@ -8,7 +8,7 @@ class CircularOrderedDict:
 
         Args:
             maxsize (int): Maximum size of the dictionary.
-            
+
         Raises:
             ValueError: Raised if maxsize argument is not a positve integer.
         """
