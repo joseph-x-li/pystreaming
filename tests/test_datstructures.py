@@ -98,6 +98,14 @@ def testcirculardict():
     cd[2] = -100
     assert cd[2] == -100
 
+    try:
+        cd[7] = 7
+        assert False
+    except KeyError:
+        pass
+
+    assert cd.__repr__() == "OrderedDict([(2, -100), (4, 4), (5, 5), (6, 6), (3, 100)])"
+
     cd.delete(2)
     assert len(cd) == 4
     assert cd.pop_front() == (4, 4)
