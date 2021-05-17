@@ -176,10 +176,8 @@ class Collector:
         Returns:
             generator: Generator that yields [arr, meta, ftime, fno]
         """
-        self.start()
         return self.decoder.handler()
 
-    @property
     def recv(self):
         return self.decoder.recv
 

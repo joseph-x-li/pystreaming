@@ -80,6 +80,7 @@ class EncoderDevice(Device):
                     socket=self.sender,
                     fno=STOPSTREAM,
                     ftime=time.time(),
+                    meta=None,
                     arr=np.zeros((10, 10, 3)),
                     flags=zmq.NOBLOCK,
                 )
