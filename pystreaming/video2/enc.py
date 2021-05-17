@@ -32,7 +32,7 @@ def enc_ps(*, shutdown, barrier, infd, outfd):
             )
             try:
                 intf.send(
-                    context=out,
+                    socket=out,
                     fno=fno,
                     ftime=ftime,
                     meta=meta,
