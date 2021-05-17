@@ -92,6 +92,7 @@ class EncoderDevice(Device):
                 fno=self.idx,
                 ftime=time.time(),
                 arr=frame,
+                meta=None,
                 flags=zmq.NOBLOCK,
             )
             self.idx += 1
