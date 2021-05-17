@@ -1,7 +1,7 @@
 import zmq
 import time
-import pystreaming.video.interface as intf
 
+from . import interface as intf
 from . import PUB_TIMESTEP, PUB_HWM
 from .BASE import Device
 

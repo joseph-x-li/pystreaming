@@ -1,8 +1,9 @@
 import zmq
 import time
-from .BASE import Device
+
 from . import interface as intf
 from . import SUB_HWM, SUB_TIMESTEP
+from .BASE import Device
 
 
 def subpush_ps(*, shutdown, barrier, infd, outfd):
