@@ -3,6 +3,7 @@ import time
 import pystreaming.video2.interface as intf
 from . import STR_HWM, RCV_HWM
 
+
 class AudioStreamer:
     def __init__(self, context, endpoint):
         """Audio streamer.
@@ -31,7 +32,7 @@ class AudioStreamer:
                 fno=self.fno,
                 ftime=time.time(),
                 buf=buf,
-                flags=zmq.NOBLOCK
+                flags=zmq.NOBLOCK,
             )
         except zmq.error.Again:
             pass
@@ -42,6 +43,7 @@ class AudioStreamer:
         rpr += f"{'OUT': <8}{self.endpoint}\n"
         rpr += f"{'HWM': <8}({STR_HWM} >"
         return rpr
+
 
 class AudioReceiver:
     def __init__(self, context, endpoint):
@@ -79,7 +81,7 @@ class AudioReceiver:
             raise TimeoutError(
                 f"No messages were received within the timeout period {timeout}ms"
             )
-        
+
     def handler(self):
         """Yield a package of data from audio channel.
 

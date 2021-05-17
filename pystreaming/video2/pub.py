@@ -1,6 +1,5 @@
 import zmq
 import time
-import multiprocessing as mp
 import pystreaming.video.interface as intf
 
 from . import PUB_TIMESTEP, PUB_HWM

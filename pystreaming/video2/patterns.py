@@ -74,6 +74,7 @@ class Streamer:
         import numpy as np
         from itertools import count
         import time
+        from pystreaming import loadimage
 
         self.start()
         testimage = loadimage(card)
@@ -116,9 +117,9 @@ class Worker:
             func (function): Stream-mapped function.
         """
         if self.drain is None:
-            self.drain = context.socket(zmq.PUSH)
+            self.drain = self.context.socket(zmq.PUSH)
             self.drain.setsockopt(zmq.SNDHWM, self.outhwm)
-            self.drain.connect(drain)
+            self.drain.connect(self.drain)
         try:
             self.decoder.start()
             self.requester.start()
@@ -177,7 +178,7 @@ class Collector:
         """
         self.start()
         return self.decoder.handler()
-    
+
     @property
     def recv(self):
         return self.decoder.recv

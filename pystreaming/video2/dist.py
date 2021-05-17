@@ -1,6 +1,5 @@
 import zmq
 import time
-import multiprocessing as mp
 
 from . import interface as intf
 from . import TRACKMISS, FRAMEMISS, DIST_TIMESTEP, DIST_HWM

@@ -14,3 +14,9 @@ To format using black:
 ```
 p -m black pystreaming/
 ```
+
+To lint with flake8:
+----
+```
+p -m flake8 --max-line-length=100 pystreaming/
+```

@@ -1,7 +1,6 @@
 import zmq
 import zmq.asyncio
 import asyncio
-import multiprocessing as mp
 from . import STOPSTREAM, FRAMEMISS, TRACKMISS
 from . import REQ_HWM, REQ_TIMESTEP
 from .BASE import Device
@@ -26,7 +25,7 @@ async def aioreq(context, source, track, drain, lock):
         ftime = await socket.recv_pyobj()
         fno = await socket.recv_pyobj()
         if fno == STOPSTREAM:
-            raise StopAsyncIteration(f"Stop stream signal received. Exiting.")
+            raise StopAsyncIteration("Stop stream signal received. Exiting.")
         if fno == FRAMEMISS:
             continue  # throw away if no frame available
         if fno == TRACKMISS:

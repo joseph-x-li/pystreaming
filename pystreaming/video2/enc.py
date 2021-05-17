@@ -1,7 +1,6 @@
 import time
 import zmq
 import numpy as np
-import multiprocessing as mp
 from functools import partial
 from turbojpeg import TurboJPEG, TJSAMP_420, TJFLAG_FASTDCT
 

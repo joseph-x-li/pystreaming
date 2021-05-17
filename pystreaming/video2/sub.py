@@ -1,6 +1,5 @@
 import zmq
 import time
-import multiprocessing as mp
 from .BASE import Device
 from . import interface as intf
 from . import SUB_HWM, SUB_TIMESTEP

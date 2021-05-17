@@ -12,7 +12,8 @@ def send(*, socket, fno, ftime, meta, arr=None, buf=None, flags=0):
         meta (pyobj): Any reasonably small picklable object.
         arr ([type], optional): Numpy array to send. Defaults to None.
         buf (bytes, optional): Byte buffer to send. Defaults to None.
-        flags (int, optional): Zmq flags to execute with (zmq.NOBLOCK or zmq.SNDMORE). Defaults to 0.
+        flags (int, optional): Zmq flags to execute with (zmq.NOBLOCK or zmq.SNDMORE).
+            Defaults to 0.
     """
     if arr is not None:
         md = {"dtype": str(arr.dtype), "shape": arr.shape}
