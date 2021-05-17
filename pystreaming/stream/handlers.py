@@ -1,13 +1,40 @@
 import cv2
 import time
-from collections import deque
+from collections import deque, OrderedDict
 from pystreaming.listlib.circulardict import CircularOrderedDict
 from pystreaming.listlib.circularlist import CircularList
 
+class Collator:
+    def __init__(self, buffer, receive_fns):
+        self.receive_fns = receive_fns
+
+    def handler(self):
+        TDELTA = None
+        tapes = [
+            OrderedDict()
+            for _ in receive_fns
+        ]
+        while True:
+            for f in self.receive_fns:
+                try:
+                    *data, ftime, fno = f(timeout=0)
+                except TimeoutError:
+                    continue
+                if TDELTA is None:
+                    TDELTA = ftime - time.time()
+
+def display(frame, BGR=True):
+    """Display a frame using OpenCV. Must be uint8.
+    
+    Press [ESC] to stop 
+
+    Args:
+        frame ([type]): [description]
+        BGR (bool, optional): [description]. Defaults to True.
+    """
 
 def display(handler, BGR=True, getter=None):
     """Yield frames from a generator and display using OpenCV.
-
 
     Args:
         handler (generator): Generator that yields data.
@@ -68,3 +95,6 @@ def dispfps(handler, n=100):
             diff = end - times.popleft()
             print(f"\rFPS: {(n / diff):.3f}", end="")
         yield data
+
+def tape(*handlers):
+    ...

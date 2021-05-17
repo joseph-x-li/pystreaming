@@ -10,6 +10,6 @@
 
 [Documentation](https://pystreaming.readthedocs.io/)
 
-Easy streaming of video and audio using fast jpg compression. 
+Easy streaming of video and audio using fast jpg compression provided by libjpegturbo.
 
-Designed for ease of installation: no ffmpeg, no gstreamer.
+Designed for ease of installation. No ffmpeg, no gstreamer.

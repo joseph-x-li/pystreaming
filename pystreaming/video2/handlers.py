@@ -8,7 +8,6 @@ from pystreaming.listlib.circularlist import CircularList
 def display(handler, BGR=True, getter=None):
     """Yield frames from a generator and display using OpenCV.
 
-
     Args:
         handler (generator): Generator that yields data.
         BGR (bool, optional): Set to False if frame is RGB format. Defaults to True.

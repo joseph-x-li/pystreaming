@@ -6,9 +6,12 @@ with open("README.md", 'r') as fh:
 with open("requirements.txt", 'r') as fh:
     install_requires = fh.read()
 
+with open("VERSION.txt", 'r') as fh:
+    version = fh.read().strip()
+
 setuptools.setup(
     name="pystreaming",
-    version=open("VERSION.txt").read().strip(),
+    version=version,
     author="Joseph Li",
     author_email="jxli@andrew.cmu.edu",
     description="Video + Audio streaming done with ZMQ",
@@ -23,7 +26,8 @@ setuptools.setup(
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "License :: OSI Approved :: MIT License",
-        "Operating System :: OS Independent",
+        "Operating System :: MacOS",
+        "Operating System :: Unix",
     ],
     python_requires=">=3.6",
 )
