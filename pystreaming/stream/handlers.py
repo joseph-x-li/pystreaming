@@ -3,7 +3,7 @@ import time
 from collections import OrderedDict
 
 
-class Collator:
+class Buffer:
     def __init__(self, bufferlen, handlers):
         assert isinstance(handlers, dict)
         self.handlers = {k: handlers[k](timeout=0) for k in handlers}

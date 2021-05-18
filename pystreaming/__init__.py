@@ -5,9 +5,7 @@ from pystreaming.video2.pub import PublisherDevice
 from pystreaming.video2.sub import SubscriberDevice
 from pystreaming.video2.req import RequesterDevice
 from pystreaming.video2.patterns import Streamer, Worker, Collector
-
-# from pystreaming.video.handlers import display, collate, dispfps
-from pystreaming.audio.patterns import AudioStreamer, AudioReceiver
+from pystreaming.video2.patterns import Streamer, Worker, Collector
 from pystreaming.video2.testimages import (
     IMAG_S,
     IMAG_M,
@@ -17,3 +15,7 @@ from pystreaming.video2.testimages import (
     TEST_L,
     loadimage,
 )
+
+from pystreaming.audio.patterns import AudioStreamer, AudioReceiver
+
+from pystreaming.stream.handlers import Buffer, display
