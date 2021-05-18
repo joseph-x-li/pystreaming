@@ -1,6 +1,6 @@
 import zmq
 import time
-import pystreaming.video2.interface as intf
+from ..video2 import interface as intf
 from . import STR_HWM, RCV_HWM
 
 
@@ -66,7 +66,7 @@ class AudioReceiver:
 
         Args:
             timeout (int, optional): Timeout period in milliseconds.
-            Set to None to wait forever. Defaults to 60_000.
+                Set to None to wait forever. Defaults to 60_000.
 
         Raises:
             TimeoutError: Raised when no messages are received in the timeout period.
@@ -82,14 +82,20 @@ class AudioReceiver:
                 f"No messages were received within the timeout period {timeout}ms"
             )
 
-    def handler(self):
+    def handler(self, timeout):
         """Yield a package of data from audio channel.
 
+        Args:
+            timeout (int): Timeout period in milliseconds.
+
         Yields:
-            list: [buf, meta, ftime, fno].
+            list: [buf, meta, ftime, fno] or None, if timeout is reached.
         """
         while True:
-            yield self.recv()
+            try:
+                yield self.recv(timeout=timeout)
+            except TimeoutError:
+                yield None
 
     def __repr__(self):
         rpr = "-----AudioReceiver-----\n"

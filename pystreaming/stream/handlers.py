@@ -1,64 +1,63 @@
-# import cv2
-# import time
-# from collections import deque, OrderedDict
-# from pystreaming.listlib.circulardict import CircularOrderedDict
-# from pystreaming.listlib.circularlist import CircularList
+import cv2
+import time
+from collections import OrderedDict
 
 
-# class Collator:
-#     def __init__(self, buffer, receive_fns):
-#         self.receive_fns = receive_fns
+class Collator:
+    def __init__(self, bufferlen, handlers):
+        assert isinstance(handlers, dict)
+        self.handlers = {k: handlers[k](timeout=0) for k in handlers}
+        self.bufferlen = bufferlen
+        self.buffers = {k: OrderedDict() for k in handlers}
 
-#     def handler(self):
-#         TDELTA = None
-#         tapes = [OrderedDict() for _ in receive_fns]
-#         while True:
-#             for f in self.receive_fns:
-#                 try:
-#                     *data, ftime, fno = f(timeout=0)
-#                 except TimeoutError:
-#                     continue
-#                 if TDELTA is None:
-#                     TDELTA = ftime - time.time()
+    def empty(self):
+        self.buffers = {k: OrderedDict() for k in self.handlers}
 
+    def handler(self):
+        tdelta = None
+        while True:
+            for k, handler in self.handlers.items():
+                data = next(handler)
+                buffer = self.buffers[k]
 
-# def display(frame, BGR=True):
-#     """Display a frame using OpenCV. Must be uint8.
+                if data is None:
+                    # handler hit
+                    time.sleep(0.001)
+                else:
+                    # handler miss
+                    data, meta, ftime, fno = data
+                    if tdelta is None:
+                        tdelta = ftime - time.time()
 
-#     Press [ESC] to stop
+                    # skip if packet is stale
+                    if ftime < time.time() + tdelta - self.bufferlen:
+                        continue
 
-#     Args:
-#         frame ([type]): [description]
-#         BGR (bool, optional): [description]. Defaults to True.
-#     """
+                    # packet is fresh. write data to buffer
+                    buffer[ftime] = (data, meta, ftime)
 
-
-# def display(handler, BGR=True, getter=None):
-#     """Yield frames from a generator and display using OpenCV.
-
-#     Args:
-#         handler (generator): Generator that yields data.
-#         BGR (bool, optional): Set to False if frame is RGB format. Defaults to True.
-#         getter (function, optional): Returns the frame from the return type of handler.
-#             Defaults to None, which acts as an identity.
-#     """
-#     for data in handler:
-#         frame = data if getter is None else getter(data)
-#         if not BGR:
-#             frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-#         cv2.imshow("pystreaming-display", frame)
-#         if cv2.waitKey(1) & 0xFF == 27:  # esc pressed
-#             break
+                if buffer.keys():  # if buffer is not empty
+                    mint = min(buffer.keys())
+                    thshold = time.time() + tdelta - self.bufferlen
+                    if mint < thshold:
+                        yield (k, buffer.pop(mint))
 
 
-# def collate(handler, buffer=10, getter=None):
-#     """Reorder frames that are mixed in transit.
+def display(frame, BGR=True):
+    """Display a frame using OpenCV. Must be uint8.
 
-#     Args:
-#         handler (generator): Generator that yields data.
-#         buffer (int, optional): Size of collate buffer. Defaults to 10.
-#         getter (function, optional): Returns (frame, meta, idx) from the return type of handler.
-#             Defaults to None, which acts as an identity.
+    Press [ESC] to stop
+
+    Args:
+        frame ([type]): [description]
+        BGR (bool, optional): [description]. Defaults to True.
+    """
+    if not BGR:
+        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+    cv2.imshow("pystreaming-display", frame)
+    if cv2.waitKey(1) & 0xFF == 27:  # esc pressed
+        raise RuntimeError("StopStream")
+
 
 #     Yields:
 #         tuple(np.ndarray, int): (frame, meta, idx), which is the expected return type of the getter.
@@ -95,7 +94,3 @@
 #             diff = end - times.popleft()
 #             print(f"\rFPS: {(n / diff):.3f}", end="")
 #         yield data
-
-
-# def tape(*handlers):
-#     ...

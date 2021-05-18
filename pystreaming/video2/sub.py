@@ -3,7 +3,7 @@ import time
 
 from . import interface as intf
 from . import SUB_HWM, SUB_TIMESTEP
-from .BASE import Device
+from .device import Device
 
 
 def subpush_ps(*, shutdown, barrier, infd, outfd):

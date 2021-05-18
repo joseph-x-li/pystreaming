@@ -3,7 +3,7 @@ import time
 
 from . import interface as intf
 from . import TRACKMISS, FRAMEMISS, DIST_TIMESTEP, DIST_HWM
-from .BASE import Device
+from .device import Device
 from ..listlib.circularlist import CircularList, Empty
 
 

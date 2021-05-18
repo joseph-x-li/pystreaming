@@ -6,7 +6,7 @@ from turbojpeg import TurboJPEG, TJSAMP_420, TJFLAG_FASTDCT
 
 from . import interface as intf
 from . import QUALITY, STOPSTREAM, ENC_TIMESTEP, ENC_HWM
-from .BASE import Device
+from .device import Device
 
 
 def enc_ps(*, shutdown, barrier, infd, outfd):

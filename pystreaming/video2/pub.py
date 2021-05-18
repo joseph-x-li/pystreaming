@@ -3,7 +3,7 @@ import time
 
 from . import interface as intf
 from . import PUB_TIMESTEP, PUB_HWM
-from .BASE import Device
+from .device import Device
 
 
 def pullpub_ps(*, shutdown, barrier, infd, outfd):

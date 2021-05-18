@@ -170,14 +170,16 @@ class Collector:
         self.device.start()
         self.startedonce = True
 
+    @property
     def handler(self):
         """Returns a handler that is used for future data handling.
 
         Returns:
             generator: Generator that yields [arr, meta, ftime, fno]
         """
-        return self.decoder.handler()
+        return self.decoder.handler
 
+    @property
     def recv(self):
         return self.decoder.recv
 

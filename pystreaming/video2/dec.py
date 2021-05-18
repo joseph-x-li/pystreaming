@@ -5,7 +5,7 @@ from turbojpeg import TurboJPEG, TJFLAG_FASTDCT, TJFLAG_FASTUPSAMPLE
 
 from . import interface as intf
 from . import DEC_TIMESTEP, DEC_HWM
-from .BASE import Device
+from .device import Device
 
 
 def dec_ps(*, shutdown, barrier, infd, outfd, fwdbuf):
@@ -24,7 +24,6 @@ def dec_ps(*, shutdown, barrier, infd, outfd, fwdbuf):
             buf, meta, ftime, fno = intf.recv(
                 socket=socket, buf=True, flags=zmq.NOBLOCK
             )
-            buf = buf if fwdbuf else None
             try:
                 intf.send(
                     socket=out,
@@ -32,7 +31,7 @@ def dec_ps(*, shutdown, barrier, infd, outfd, fwdbuf):
                     ftime=ftime,
                     meta=meta,
                     arr=decoder(buf),
-                    buf=buf,
+                    buf=buf if fwdbuf else None,
                     flags=zmq.NOBLOCK,
                 )
             except zmq.error.Again:
@@ -80,7 +79,6 @@ class DecoderDevice(Device):
                 socket=self.receiver,
                 arr=True,
                 buf=self.fwdbuf,
-                meta=self.rcvmeta,
                 flags=zmq.NOBLOCK,
             )
         else:
@@ -88,14 +86,20 @@ class DecoderDevice(Device):
                 f"No messages were received within the timeout period {timeout}ms"
             )
 
-    def handler(self):
+    def handler(self, timeout):
         """Yield a package of data from the decoder pool.
 
+        Args:
+            timeout (int): Timeout period in milliseconds.
+
         Yields:
-            list: [arr, buf, meta, ftime, fno].
+            list: [arr, buf, meta, ftime, fno] or None, if timeout is reached.
         """
         while True:
-            yield self.recv()
+            try:
+                yield self.recv(timeout=timeout)
+            except TimeoutError:
+                yield None
 
     def __repr__(self):
         rpr = "-----DecoderDevice-----\n"

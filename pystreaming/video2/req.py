@@ -4,7 +4,7 @@ import asyncio
 
 from . import STOPSTREAM, FRAMEMISS, TRACKMISS
 from . import REQ_HWM, REQ_TIMESTEP
-from .BASE import Device
+from .device import Device
 
 
 """Stop on STOPSTREAM, or TRACKMISS
