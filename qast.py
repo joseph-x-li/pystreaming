@@ -7,13 +7,10 @@ cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
 stream = pystreaming.Streamer(zmq.Context(), "tcp://*:5555") 
 audiostream = pystreaming.AudioStreamer(zmq.Context(), "tcp://*:5556")
-
 stream.start()
-
 time.sleep(1)
 
-start = time.time()
-n = 0
+start, n = time.time(), 0
 while True:
     n += 1
     ret, frame = cap.read()

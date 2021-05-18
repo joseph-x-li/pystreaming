@@ -20,18 +20,18 @@ class AudioStreamer:
         self.endpoint = endpoint
         self.fno = 0
 
-    def send(self, buf):
+    def send(self, arr):
         """Send a buffer of audio.
 
         Args:
-            buf (bytes): A segment of audio buffer
+            arr (np.ndarray): A segment of audio as a numpy array.
         """
         try:
             intf.send(
                 socket=self.socket,
                 fno=self.fno,
                 ftime=time.time(),
-                buf=buf,
+                arr=arr,
                 flags=zmq.NOBLOCK,
             )
         except zmq.error.Again:
@@ -72,9 +72,9 @@ class AudioReceiver:
             TimeoutError: Raised when no messages are received in the timeout period.
         """
         if self.socket.poll(timeout):
-            intf.recv(
+            return intf.recv(
                 socket=self.socket,
-                buf=True,
+                arr=True,
                 flags=zmq.NOBLOCK,
             )
         else:
@@ -89,7 +89,7 @@ class AudioReceiver:
             timeout (int): Timeout period in milliseconds.
 
         Yields:
-            list: [buf, meta, ftime, fno] or None, if timeout is reached.
+            list: [arr, meta, ftime, fno] or None, if timeout is reached.
         """
         while True:
             try:
