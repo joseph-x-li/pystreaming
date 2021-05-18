@@ -28,32 +28,50 @@ def recordmic():
     import queue
     q = queue.Queue()
 
-
     def callback(indata, frames, time, status):
-        """This is called (from a separate thread) for each audio block."""
         q.put(indata.copy())
 
     device = 0
+    device_info = sd.query_devices(device, 'input')
+    samplerate = int(device_info['default_samplerate'])
 
     try:
-        device_info = sd.query_devices(device, 'input')
-        # soundfile expects an int, sounddevice provides a float:
-        samplerate = int(device_info['default_samplerate'])
-
-        # Make sure the file is opened before recording anything:
         with sf.SoundFile("_rec.wav", mode='x', samplerate=samplerate, channels=1) as file:
             with sd.InputStream(samplerate=samplerate, device=device, channels=1, callback=callback):
-                print('#' * 80)
-                print('press Ctrl+C to stop the recording')
-                print('#' * 80)
+                print('#' * 80 + 'press Ctrl+C to stop the recording' + '#' * 80)
                 while True:
                     file.write(q.get())
     except KeyboardInterrupt:
         print('Recording finished')
-    except Exception as e:
-        print(type(e).__name__ + ': ' + str(e))
 
+def passthrough():
+    import queue
+    IN = queue.Queue()
+    OUT = queue.Queue()
+
+    def callback_in(indata, frames, time, status):
+        IN.put(indata.copy())
+        
+    def callback_out(outdata, frames, time, status):
+        outdata[:] = OUT.get()
+
+    indevice = 0
+    outdevice = 1
+    device_info = sd.query_devices(indevice, 'input')
+    samplerate = int(device_info['default_samplerate'])
+
+    blocksize = 256
+        
+    try:
+        with sd.OutputStream(samplerate=samplerate, blocksize=blocksize, device=outdevice, channels=1, callback=callback_out):
+            with sd.InputStream(samplerate=samplerate, blocksize=blocksize, device=indevice, channels=1, callback=callback_in):
+                print('#' * 80 + 'press Ctrl+C to stop the recording' + '#' * 80)
+                while True:
+                    OUT.put(IN.get())
+    except KeyboardInterrupt:
+        print('Passthrough finished')
 
 if __name__ == "__main__":
     # playfile()
-    recordmic()
+    # recordmic()
+    # passthrough()
