@@ -11,17 +11,17 @@ cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 indevice = 0
 device_info = sd.query_devices(indevice, 'input')
 samplerate = int(device_info['default_samplerate'])
-import queue
-IN = queue.Queue()
 
-# set up stream backend
+# set up video stream backend
 stream = pystreaming.Streamer(zmq.Context(), "tcp://*:5555") 
-audiostream = pystreaming.AudioStreamer(zmq.Context(), "tcp://*:5556")
 stream.start()
-time.sleep(1)
 
+# set up audio stream backend
+audiostream = pystreaming.AudioStreamer(zmq.Context(), "tcp://*:5556")
 def callback_in(indata, frames, time, status):
     audiostream.send(indata.copy())
+
+time.sleep(1)
 
 start, n = time.time(), 0
 with sd.InputStream(samplerate=samplerate, device=indevice, channels=1, callback=callback_in):
