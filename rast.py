@@ -24,11 +24,11 @@ def main():
     try:
         with sd.OutputStream(samplerate=samplerate, blocksize=blocksize, device=outdevice, channels=1, callback=callback_out):
             for data in buffer.handler():
-                stream, data = data
-                if stream == 'video':
+                streamtype, data = data
+                if streamtype == 'video':
                     frame, _, _ = data
                     display(frame)
-                if stream == 'audio':
+                if streamtype == 'audio':
                     arr, _, _ = data
                     OUT.put(arr)
     except RuntimeError:
