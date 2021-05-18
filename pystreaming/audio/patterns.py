@@ -5,16 +5,15 @@ from . import STR_HWM, RCV_HWM
 
 
 class AudioStreamer:
-    def __init__(self, context, endpoint):
+    def __init__(self, endpoint):
         """Audio streamer.
 
         Binds to a zmq PUB socket.
 
         Args:
-            context (zmq.Context): Zmq context of calling thread.
             endpoint (str): Descriptor of stream publishing endpoint.
         """
-        self.socket = context.socket(zmq.PUB)
+        self.socket = zmq.Context.instance().socket(zmq.PUB)
         self.socket.bind(endpoint)
         self.socket.setsockopt(zmq.SNDHWM, STR_HWM)
         self.endpoint = endpoint
@@ -47,16 +46,15 @@ class AudioStreamer:
 
 
 class AudioReceiver:
-    def __init__(self, context, endpoint):
+    def __init__(self, endpoint):
         """Audio receiver.
 
         Connects using a zmq SUB socket.
 
         Args:
-            context (zmq.Context): Zmq context of calling thread.
             endpoint (str): Descriptor of stream publishing endpoint.
         """
-        self.socket = context.socket(zmq.SUB)
+        self.socket = zmq.Context.instance().socket(zmq.SUB)
         self.socket.setsockopt(zmq.RCVHWM, RCV_HWM)
         self.socket.connect(endpoint)
         self.socket.subscribe("")

@@ -12,31 +12,23 @@ indevice = 0
 blocksize = 256
 samplerate = 32000
 
-# set up video stream backend
-context = zmq.Context()
-stream = pystreaming.Streamer(context, "tcp://*:5555")
-stream.start()
-
 # set up audio stream backend
-audiostream = pystreaming.AudioStreamer(context, "tcp://*:5556")
+start, n = time.time(), 0
 
 
+audiostream = pystreaming.AudioStreamer("tcp://*:5556")
 def callback_in(indata, frames, time, status):
     audiostream.send(indata.copy())
-
-
-time.sleep(1)
-
-start, n = time.time(), 0
-with sd.InputStream(
-    samplerate=samplerate,
-    blocksize=blocksize,
-    device=indevice,
-    channels=1,
-    callback=callback_in,
-):
-    while True:
-        n += 1
-        ret, frame = cap.read()
-        stream.send(frame)
-        print(f"\rFPS: {(n / (time.time() - start)):.3f}", end="")
+with pystreaming.Streamer("tcp://*:5555") as stream:
+    with sd.InputStream(
+        samplerate=samplerate,
+        blocksize=blocksize,
+        device=indevice,
+        channels=1,
+        callback=callback_in,
+    ):
+        while True:
+            n += 1
+            ret, frame = cap.read()
+            stream.send(frame)
+            print(f"\rFPS: {(n / (time.time() - start)):.3f}", end="")

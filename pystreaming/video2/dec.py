@@ -42,18 +42,17 @@ def dec_ps(*, shutdown, barrier, infd, outfd, fwdbuf):
 
 
 class DecoderDevice(Device):
-    def __init__(self, context, nproc, seed, fwdbuf=False):
+    def __init__(self, nproc, seed, fwdbuf=False):
         """Create a multiprocessing frame decoder device.
 
         Args:
-            context (zmq.Context): Zmq context of calling thread.
             nproc (int): Number of decoding processes.
             seed (str): File descriptor seed (to prevent ipc collisions).
             fwdbuf (bool, optional): True if we forward the compressed frame. Defaults to False.
         """
         self.infd = "ipc:///tmp/decin" + seed
         self.outfd = "ipc:///tmp/decout" + seed
-        self.context, self.nproc, self.fwdbuf = context, nproc, fwdbuf
+        self.context, self.nproc, self.fwdbuf = zmq.Context.instance(), nproc, fwdbuf
         dkwargs = {"infd": self.infd, "outfd": self.outfd, "fwdbuf": self.fwdbuf}
         super().__init__(dec_ps, dkwargs, nproc)
         self.receiver = self.context.socket(zmq.PULL)

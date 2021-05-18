@@ -13,18 +13,17 @@ from . import interface as intf
 
 
 class Streamer:
-    def __init__(self, context, endpoint, tracks=None, nproc=2, mapreduce=False):
+    def __init__(self, endpoint, tracks=None, nproc=2, mapreduce=False):
         """Video streamer with P2P and Map-Reduce functionality.
 
         Args:
-            context (zmq.Context): Zmq context of calling thread.
             endpoint (str): Descriptor of stream endpoint.
             tracks (list[str], optional): Video stream tracks. Defaults to None.
             nproc (int, optional): Number of processes devoted to encoding. Defaults to 2.
             mapreduce (bool, optional): Enable Map-Reduce streaming pattern. Defaults to False.
         """
         seed = uuid.uuid1().hex
-        self.encoder = EncoderDevice(context, nproc, seed)
+        self.encoder = EncoderDevice(nproc, seed)
         if mapreduce:
             self.distributor = DistributorDevice(
                 ["none"] if tracks is None else tracks, endpoint, seed
@@ -94,16 +93,15 @@ class Streamer:
         self.start()
         return self
 
-    def __exit__(self):
+    def __exit__(self, exception_type, exception_value, traceback):
         self.stop()
 
 
 class Worker:
-    def __init__(self, context, source, drain, track="none", reqthread=3, decproc=2):
+    def __init__(self, source, drain, track="none", reqthread=3, decproc=2):
         """Map pattern in the Map-Reduce streaming pattern.
 
         Args:
-            context (zmq.Context): Zmq context of calling thread.
             source (str): Descriptor of map-enabled stream.
             drain (str): Descriptor of Collector.
             track (str, optional): Video stream track name. Defaults to "none".
@@ -112,8 +110,8 @@ class Worker:
         """
         seed = uuid.uuid1().hex
         self.requester = RequesterDevice(source, track, reqthread, seed)
-        self.decoder = DecoderDevice(context, decproc, seed, fwdbuf=True)
-        self.context = context
+        self.decoder = DecoderDevice(decproc, seed, fwdbuf=True)
+        self.context = zmq.Context.instance()
         self.drain = None
 
     def run(self, func):
@@ -143,11 +141,10 @@ class Worker:
 
 
 class Collector:
-    def __init__(self, context, endpoint, nproc=2, mapreduce=False):
+    def __init__(self, endpoint, nproc=2, mapreduce=False):
         """Collect frames from  video stream.
 
         Args:
-            context (zmq.Context): Zmq context of calling thread.
             endpoint (str): Descriptor of collection endpoint.
             nproc (int, optional): Number of processes devoted to decoding. Defaults to 2.
             mapreduce (bool, optional): Enable Map-Reduce streaming pattern. Defaults to False.
@@ -164,7 +161,7 @@ class Collector:
             self.device.bind_out("ipc:///tmp/decin" + seed)
         else:
             self.device = SubscriberDevice(endpoint, seed)
-        self.decoder = DecoderDevice(context, nproc, seed)
+        self.decoder = DecoderDevice(nproc, seed)
         self.started = False
 
     def start(self):
@@ -200,5 +197,5 @@ class Collector:
         self.start()
         return self
 
-    def __exit__(self):
+    def __exit__(self, exception_type, exception_value, traceback):
         self.stop()

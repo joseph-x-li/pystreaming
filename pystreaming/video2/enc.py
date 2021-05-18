@@ -47,15 +47,14 @@ def enc_ps(*, shutdown, barrier, infd, outfd):
 
 
 class EncoderDevice(Device):
-    def __init__(self, context, nproc, seed):
+    def __init__(self, nproc, seed):
         """Create a multiprocessing frame encoder device.
 
         Args:
-            context (zmq.Context): Zmq context of calling thread.
             nproc (int): Number of encoding processes.
             seed (str): File descriptor seed (to prevent ipc collisions).
         """
-        self.context = context
+        self.context = zmq.Context.instance()
         self.infd = "ipc:///tmp/encin" + seed
         self.outfd = "ipc:///tmp/encout" + seed
         dkwargs = {"infd": self.infd, "outfd": self.outfd}

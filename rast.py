@@ -29,6 +29,7 @@ def main():
             blocksize=blocksize,
             device=outdevice,
             channels=1,
+            latency='low',
             callback=callback_out,
         ):
             for data in buffer.handler():
