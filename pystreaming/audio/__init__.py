@@ -1,2 +1,2 @@
-STR_HWM = 5
-RCV_HWM = 5
+STR_HWM = 2
+RCV_HWM = 2

@@ -22,7 +22,7 @@ audiostream = pystreaming.AudioStreamer(context, "tcp://*:5556")
 
 
 def callback_in(indata, frames, time, status):
-    audiostream.send(indata.copy(), realtime=time)
+    audiostream.send(indata.copy())
 
 
 time.sleep(1)
