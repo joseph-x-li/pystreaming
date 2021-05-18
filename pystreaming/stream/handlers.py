@@ -39,6 +39,7 @@ class Collator:
                 if buffer.keys():  # if buffer is not empty
                     mint = min(buffer.keys())
                     thshold = time.time() + tdelta - self.bufferlen
+                    # yield data if time is right
                     if mint < thshold:
                         yield (k, buffer.pop(mint))
 
@@ -58,6 +59,7 @@ def display(frame, BGR=True):
     if cv2.waitKey(1) & 0xFF == 27:  # esc pressed
         raise RuntimeError("StopStream")
 
+def playaudio()
 
 #     Yields:
 #         tuple(np.ndarray, int): (frame, meta, idx), which is the expected return type of the getter.
