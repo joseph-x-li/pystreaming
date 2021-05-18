@@ -1,4 +1,5 @@
 import pystreaming, cv2, zmq, time
+import sounddevice as sd
 
 cap = cv2.VideoCapture(0)
 cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"MJPG"))
