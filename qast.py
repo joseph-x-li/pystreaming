@@ -13,11 +13,12 @@ blocksize = 256
 samplerate = 32000
 
 # set up video stream backend
-stream = pystreaming.Streamer(zmq.Context(), "tcp://*:5555") 
+context = zmq.Context()
+stream = pystreaming.Streamer(context, "tcp://*:5555") 
 stream.start()
 
 # set up audio stream backend
-audiostream = pystreaming.AudioStreamer(zmq.Context(), "tcp://*:5556")
+audiostream = pystreaming.AudioStreamer(context, "tcp://*:5556")
 def callback_in(indata, frames, time, status):
     audiostream.send(indata.copy())
 

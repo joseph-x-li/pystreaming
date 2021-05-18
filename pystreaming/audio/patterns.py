@@ -14,7 +14,7 @@ class AudioStreamer:
             context (zmq.Context): Zmq context of calling thread.
             endpoint (str): Descriptor of stream publishing endpoint.
         """
-        self.socket = context.Socket(zmq.PUB)
+        self.socket = context.socket(zmq.PUB)
         self.socket.bind(endpoint)
         self.socket.setsockopt(zmq.SNDHWM, STR_HWM)
         self.endpoint = endpoint
@@ -31,6 +31,7 @@ class AudioStreamer:
                 socket=self.socket,
                 fno=self.fno,
                 ftime=time.time(),
+                meta=None,
                 arr=arr,
                 flags=zmq.NOBLOCK,
             )
@@ -55,7 +56,7 @@ class AudioReceiver:
             context (zmq.Context): Zmq context of calling thread.
             endpoint (str): Descriptor of stream publishing endpoint.
         """
-        self.socket = context.Socket(zmq.SUB)
+        self.socket = context.socket(zmq.SUB)
         self.socket.setsockopt(zmq.RCVHWM, RCV_HWM)
         self.socket.connect(endpoint)
         self.socket.subscribe("")
