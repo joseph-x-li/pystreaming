@@ -59,6 +59,7 @@ def display(frame, BGR=True):
     if cv2.waitKey(1) & 0xFF == 27:  # esc pressed
         raise RuntimeError("StopStream")
 
+
 #     Yields:
 #         tuple(np.ndarray, int): (frame, meta, idx), which is the expected return type of the getter.
 #     """

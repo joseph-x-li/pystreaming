@@ -9,7 +9,6 @@ from pystreaming import (
 import zmq
 import uuid
 from zmq.devices import ProcessDevice
-
 from . import interface as intf
 
 
@@ -90,6 +89,13 @@ class Streamer:
             print(i)
             self.send(storage[i % 360] if animated else storage)
             time.sleep(1 / 30)
+
+    def __enter__(self):
+        self.start()
+        return self
+
+    def __exit__(self):
+        self.stop()
 
 
 class Worker:
@@ -189,3 +195,10 @@ class Collector:
             self.device.stop()
         self.decoder.stop()
         self.started = False
+
+    def __enter__(self):
+        self.start()
+        return self
+
+    def __exit__(self):
+        self.stop()

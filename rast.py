@@ -9,26 +9,34 @@ def main():
     stream = Collector(context, "tcp://172.16.0.29:5555")
     audiostream = AudioReceiver(context, "tcp://172.16.0.29:5556")
     stream.start()
-    buffer = Buffer(0.5, {'video': stream.handler, 'audio': audiostream.handler})
-    
+    buffer = Buffer(0.5, {"video": stream.handler, "audio": audiostream.handler})
+
     time.sleep(1)
-    
+
     import queue
+
     outdevice = 1
     samplerate = 32000
     blocksize = 256
     OUT = queue.Queue()
+
     def callback_out(outdata, frames, time, status):
         outdata[:] = OUT.get()
-    
+
     try:
-        with sd.OutputStream(samplerate=samplerate, blocksize=blocksize, device=outdevice, channels=1, callback=callback_out):
+        with sd.OutputStream(
+            samplerate=samplerate,
+            blocksize=blocksize,
+            device=outdevice,
+            channels=1,
+            callback=callback_out,
+        ):
             for data in buffer.handler():
                 stream, data = data
-                if stream == 'video':
+                if stream == "video":
                     frame, _, _ = data
                     display(frame)
-                if stream == 'audio':
+                if stream == "audio":
                     arr, _, _ = data
                     OUT.put(arr)
     except RuntimeError:

@@ -20,17 +20,18 @@ class AudioStreamer:
         self.endpoint = endpoint
         self.fno = 0
 
-    def send(self, arr):
+    def send(self, arr, realtime=None):
         """Send a buffer of audio.
 
         Args:
             arr (np.ndarray): A segment of audio as a numpy array.
+            realtime (float): Accurate time of audio capture.
         """
         try:
             intf.send(
                 socket=self.socket,
                 fno=self.fno,
-                ftime=time.time(),
+                ftime=time.time() if realtime is None else realtime,
                 meta=None,
                 arr=arr,
                 flags=zmq.NOBLOCK,

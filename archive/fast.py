@@ -11,13 +11,15 @@ filename = "output.wav"
 
 p = pyaudio.PyAudio()  # Create an interface to PortAudio
 
-print('Recording')
+print("Recording")
 
-stream = p.open(format=sample_format,
-                channels=channels,
-                rate=fs,
-                frames_per_buffer=chunk,
-                input=True)
+stream = p.open(
+    format=sample_format,
+    channels=channels,
+    rate=fs,
+    frames_per_buffer=chunk,
+    input=True,
+)
 
 frames = []  # Initialize array to store frames
 
@@ -27,18 +29,18 @@ for i in range(0, int(fs / chunk * seconds)):
     print(f"\r{i}, {len(data)}, {data[:30]}", end="")
     frames.append(data)
 
-# Stop and close the stream 
+# Stop and close the stream
 stream.stop_stream()
 stream.close()
 # Terminate the PortAudio interface
 p.terminate()
 
-print('Finished recording')
+print("Finished recording")
 
 # Save the recorded data as a WAV file
-wf = wave.open(filename, 'wb')
+wf = wave.open(filename, "wb")
 wf.setnchannels(channels)
 wf.setsampwidth(p.get_sample_size(sample_format))
 wf.setframerate(fs)
-wf.writeframes(b''.join(frames))
+wf.writeframes(b"".join(frames))
 wf.close()

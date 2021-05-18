@@ -1,12 +1,12 @@
 import setuptools
 
-with open("README.md", 'r') as fh:
+with open("README.md", "r") as fh:
     long_description = fh.read()
 
-with open("requirements.txt", 'r') as fh:
+with open("requirements.txt", "r") as fh:
     install_requires = fh.read()
 
-with open("VERSION.txt", 'r') as fh:
+with open("VERSION.txt", "r") as fh:
     version = fh.read().strip()
 
 setuptools.setup(
