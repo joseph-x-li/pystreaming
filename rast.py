@@ -1,5 +1,7 @@
-from pystreaming import Collector, AudioReceiver, Buffer, display, playbuffer
+from pystreaming import Collector, AudioReceiver, Buffer, display
+import sounddevice as sd
 import zmq
+import time
 
 
 def main():
@@ -7,21 +9,30 @@ def main():
     stream = Collector(context, "tcp://172.16.0.29:5555")
     audiostream = AudioReceiver(context, "tcp://172.16.0.29:5556")
     stream.start()
-    collator = Buffer(
-        0.5, 
-        {'video': stream.handler, 'audio': audiostream.handler
-    })
+    buffer = Buffer(0.5, {'video': stream.handler, 'audio': audiostream.handler})
+    
+    time.sleep(1)
+    
+    import queue
+    outdevice = 1
+    samplerate = 32000
+    blocksize = 256
+    OUT = queue.Queue()
+    def callback_out(outdata, frames, time, status):
+        outdata[:] = OUT.get()
+    
     try:
-        for data in collator.handler():
-            stream, data = data
-            if stream == 'video':
-                frame, _, _ = data
-                display(frame)
-            if stream == 'audio':
-                buf, _, _ = data
-                display(frame)
+        with sd.OutputStream(samplerate=samplerate, blocksize=blocksize, device=outdevice, channels=1, callback=callback_out):
+            for data in buffer.handler():
+                stream, data = data
+                if stream == 'video':
+                    frame, _, _ = data
+                    display(frame)
+                if stream == 'audio':
+                    arr, _, _ = data
+                    OUT.put(arr)
     except RuntimeError:
-        collator.empty()
+        buffer.empty()
         stream.stop()
         print("Exiting Stream")
 

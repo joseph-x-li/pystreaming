@@ -9,8 +9,8 @@ cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
 # set up microphone
 indevice = 0
-device_info = sd.query_devices(indevice, 'input')
-samplerate = int(device_info['default_samplerate'])
+blocksize = 256
+samplerate = 32000
 
 # set up video stream backend
 stream = pystreaming.Streamer(zmq.Context(), "tcp://*:5555") 
@@ -24,7 +24,7 @@ def callback_in(indata, frames, time, status):
 time.sleep(1)
 
 start, n = time.time(), 0
-with sd.InputStream(samplerate=samplerate, device=indevice, channels=1, callback=callback_in):
+with sd.InputStream(samplerate=samplerate, blocksize=blocksize, device=indevice, channels=1, callback=callback_in):
     while True:
         n += 1
         ret, frame = cap.read()
