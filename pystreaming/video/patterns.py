@@ -112,7 +112,9 @@ class Worker:
         self.requester = RequesterDevice(source, track, reqthread, seed)
         self.decoder = DecoderDevice(decproc, seed, fwdbuf=True)
         self.context = zmq.Context.instance()
-        self.drain = None
+        self.drain = self.context.socket(zmq.PUSH)
+        self.drain.setsockopt(zmq.SNDHWM, self.outhwm)
+        self.drain.connect(self.drain)
 
     def run(self, func):
         """Run map-enabled worker. This method blocks.
@@ -121,9 +123,7 @@ class Worker:
             func (function): Stream-mapped function.
         """
         if self.drain is None:
-            self.drain = self.context.socket(zmq.PUSH)
-            self.drain.setsockopt(zmq.SNDHWM, self.outhwm)
-            self.drain.connect(self.drain)
+            
         try:
             self.decoder.start()
             self.requester.start()

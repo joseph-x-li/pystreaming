@@ -12,4 +12,4 @@
 
 Easy streaming of video and audio using fast jpg compression provided by libjpegturbo.
 
-Designed for universal installation and minimal requirements. No ffmpeg, no gstreamer. Pure Python.
+Designed for universal installation and minimal requirements. No ffmpeg, no gstreamer.

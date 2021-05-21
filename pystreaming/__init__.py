@@ -1,12 +1,12 @@
-from pystreaming.video2.enc import EncoderDevice
-from pystreaming.video2.dist import DistributorDevice
-from pystreaming.video2.dec import DecoderDevice
-from pystreaming.video2.pub import PublisherDevice
-from pystreaming.video2.sub import SubscriberDevice
-from pystreaming.video2.req import RequesterDevice
-from pystreaming.video2.patterns import Streamer, Worker, Collector
-from pystreaming.video2.patterns import Streamer, Worker, Collector
-from pystreaming.video2.testimages import (
+from pystreaming.video.enc import EncoderDevice
+from pystreaming.video.dist import DistributorDevice
+from pystreaming.video.dec import DecoderDevice
+from pystreaming.video.pub import PublisherDevice
+from pystreaming.video.sub import SubscriberDevice
+from pystreaming.video.req import RequesterDevice
+from pystreaming.video.patterns import Streamer, Worker, Collector
+from pystreaming.video.patterns import Streamer, Worker, Collector
+from pystreaming.video.testimages import (
     IMAG_S,
     IMAG_M,
     IMAG_L,

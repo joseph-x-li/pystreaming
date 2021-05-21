@@ -1,6 +1,6 @@
 import zmq
 import time
-from ..video2 import interface as intf
+from ..video import interface as intf
 from . import STR_HWM, RCV_HWM
 
 

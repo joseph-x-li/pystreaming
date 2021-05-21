@@ -1,6 +1,6 @@
 import cv2
 import time
-from collections import OrderedDict
+from collections import OrderedDict, deque
 
 
 class Buffer:
@@ -59,6 +59,24 @@ def display(frame, BGR=True):
     if cv2.waitKey(1) & 0xFF == 27:  # esc pressed
         raise RuntimeError("StopStream")
 
+def dispfps(handler, n=100):
+    """Average iterations per second over last n iterations.
+
+    Args:
+        handler (generator): Generator that yields data.
+        n (int, optional): Number of iterations to average over. Defaults to 100.
+
+    Yields:
+        pyobj: Forwards data from handler
+    """
+    times = deque()
+    for data in handler:
+        end = time.time()
+        times.append(end)
+        if len(times) > n:
+            diff = end - times.popleft()
+            print(f"\rFPS: {(n / diff):.3f}", end="")
+        yield data
 
 #     Yields:
 #         tuple(np.ndarray, int): (frame, meta, idx), which is the expected return type of the getter.
@@ -76,22 +94,3 @@ def display(frame, BGR=True):
 #             yield collate[most_recent] + (most_recent,)
 #             collate.delete(most_recent)
 
-
-# def dispfps(handler, n=100):
-#     """Average iterations per second over last n iterations.
-
-#     Args:
-#         handler (generator): Generator that yields data.
-#         n (int, optional): Number of iterations to average over. Defaults to 100.
-
-#     Yields:
-#         pyobj: Forwards data from handler
-#     """
-#     times = deque()
-#     for data in handler:
-#         end = time.time()
-#         times.append(end)
-#         if len(times) > n:
-#             diff = end - times.popleft()
-#             print(f"\rFPS: {(n / diff):.3f}", end="")
-#         yield data
