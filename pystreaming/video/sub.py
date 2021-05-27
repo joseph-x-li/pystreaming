@@ -1,7 +1,7 @@
 import zmq
 import time
 
-from . import interface as intf
+from ..stream import interface as intf
 from . import SUB_HWM, SUB_TIMESTEP
 from .device import Device
 
@@ -19,17 +19,14 @@ def subpush_ps(*, shutdown, barrier, infd, outfd):
     while not shutdown.is_set():
         target = time.time() + SUB_TIMESTEP
         if socket.poll(0):
-            buf, meta, ftime, fno = intf.recv(
+            data = intf.recv(
                 socket=socket, buf=True, flags=zmq.NOBLOCK
             )
             try:
                 intf.send(
                     socket=out,
-                    fno=fno,
-                    ftime=ftime,
-                    meta=meta,
-                    buf=buf,
                     flags=zmq.NOBLOCK,
+                    **data,
                 )
             except zmq.error.Again:
                 pass  # Ignore misses to send out
@@ -54,7 +51,7 @@ class SubscriberDevice(Device):
         super().__init__(subpush_ps, dkwargs, 1)
 
     def __repr__(self):
-        rpr = "-----Subscriber-----\n"
+        rpr = "-----SubscriberDevice-----\n"
         rpr += f"{'IN': <8}{self.infd}\n"
         rpr += f"{'OUT': <8}{self.outfd}\n"
         rpr += f"{'HWM': <8}> {SUB_HWM})({SUB_HWM} >"

@@ -3,7 +3,7 @@ import zmq
 from functools import partial
 from turbojpeg import TurboJPEG, TJFLAG_FASTDCT, TJFLAG_FASTUPSAMPLE
 
-from . import interface as intf
+from ..stream import interface as intf
 from . import DEC_TIMESTEP, DEC_HWM
 from .device import Device
 
@@ -21,17 +21,17 @@ def dec_ps(*, shutdown, barrier, infd, outfd, fwdbuf):
     while not shutdown.is_set():
         target = time.time() + DEC_TIMESTEP
         if socket.poll(0):
-            buf, meta, ftime, fno = intf.recv(
+            data = intf.recv(
                 socket=socket, buf=True, flags=zmq.NOBLOCK
             )
             try:
                 intf.send(
                     socket=out,
-                    fno=fno,
-                    ftime=ftime,
-                    meta=meta,
-                    arr=decoder(buf),
-                    buf=buf if fwdbuf else None,
+                    fno=data['fno'],
+                    ftime=data['ftime'],
+                    meta=data['meta'],
+                    arr=decoder(data['buf']),
+                    buf=data['buf'] if fwdbuf else None,
                     flags=zmq.NOBLOCK,
                 )
             except zmq.error.Again:

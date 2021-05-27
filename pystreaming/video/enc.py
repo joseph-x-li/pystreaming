@@ -4,7 +4,7 @@ import numpy as np
 from functools import partial
 from turbojpeg import TurboJPEG, TJSAMP_420, TJFLAG_FASTDCT
 
-from . import interface as intf
+from ..stream import interface as intf
 from . import QUALITY, STOPSTREAM, ENC_TIMESTEP, ENC_HWM
 from .device import Device
 
@@ -27,17 +27,16 @@ def enc_ps(*, shutdown, barrier, infd, outfd):
     while not shutdown.is_set():
         target = time.time() + ENC_TIMESTEP
         if socket.poll(0):
-            arr, meta, ftime, fno = intf.recv(
+            data = intf.recv(
                 socket=socket, arr=True, flags=zmq.NOBLOCK
             )
+            data['buf'] = encoder(data['arr'])
+            del data['arr']
             try:
                 intf.send(
                     socket=out,
-                    fno=fno,
-                    ftime=ftime,
-                    meta=meta,
-                    buf=encoder(arr),
                     flags=zmq.NOBLOCK,
+                    **data,
                 )
             except zmq.error.Again:
                 pass

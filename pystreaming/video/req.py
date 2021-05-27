@@ -87,7 +87,7 @@ class RequesterDevice(Device):
         super().__init__(aiomain, dkwargs, 1)
 
     def __repr__(self):
-        rpr = "-----Requester-----\n"
+        rpr = "-----RequesterDevice-----\n"
         rpr += f"{'THDS': <8}{self.nthread}\n"
         rpr += f"{'TRACK': <8}{self.track}\n"
         rpr += f"{'IN': <8}{self.source}\n"

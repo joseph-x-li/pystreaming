@@ -33,20 +33,20 @@ def recv(*, socket, arr=False, buf=False, flags=0):
         socket (zmq.Context.socket): Socket through which to receive data.
         arr (bool, optional): Change to True if you expect an arr. Defaults to False.
         buf (bool, optional): Change to True if you expect a byte buffer. Defaults to False.
-        flags (int, optional): [description]. Defaults to 0.
+        flags (int, optional): Zmq flags to execute with (zmq.NOBLOCK). Defaults to 0.
 
     Returns:
-        list: Expected items, in the order: [arr, buf, meta, ftime, fno]
+        dict: Expected items, with possible keys: {arr, buf, meta, ftime, fno}. 
     """
-    out = []
+    out = {}
     if arr:
         md = socket.recv_json(flags=flags)
         msg = socket.recv(copy=False, flags=flags)
         arrbuf = memoryview(msg)
-        out.append(np.frombuffer(arrbuf, dtype=md["dtype"]).reshape(md["shape"]))
+        out['arr'] = np.frombuffer(arrbuf, dtype=md["dtype"]).reshape(md["shape"])
     if buf:
-        out.append(socket.recv(copy=False, flags=flags))
-    out.append(socket.recv_pyobj(flags=flags))  # meta
-    out.append(socket.recv_pyobj(flags=flags))  # ftime
-    out.append(socket.recv_pyobj(flags=flags))  # fno
+        out['buf'] = socket.recv(copy=False, flags=flags)
+    out['meta'] = socket.recv_pyobj(flags=flags)
+    out['ftime'] = socket.recv_pyobj(flags=flags)
+    out['fno'] = socket.recv_pyobj(flags=flags)
     return out

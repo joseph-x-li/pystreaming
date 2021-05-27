@@ -9,7 +9,7 @@ from pystreaming import (
 import zmq
 import uuid
 from zmq.devices import ProcessDevice
-from . import interface as intf
+from ..stream import interface as intf
 
 
 class Streamer:
@@ -17,17 +17,18 @@ class Streamer:
         """Video streamer with P2P and Map-Reduce functionality.
 
         Args:
-            endpoint (str): Descriptor of stream endpoint.
-            tracks (list[str], optional): Video stream tracks. Defaults to None.
+            endpoint (str): Descriptor of video stream endpoint.
+            tracks (list[str], optional): Video stream tracks. Defaults to None which is ["none"].
             nproc (int, optional): Number of processes devoted to encoding. Defaults to 2.
             mapreduce (bool, optional): Enable Map-Reduce streaming pattern. Defaults to False.
         """
         seed = uuid.uuid1().hex
+        if tracks is None:
+            tracks = ["none"]
+        
         self.encoder = EncoderDevice(nproc, seed)
         if mapreduce:
-            self.distributor = DistributorDevice(
-                ["none"] if tracks is None else tracks, endpoint, seed
-            )
+            self.distributor = DistributorDevice(tracks, endpoint, seed)
         else:
             self.distributor = PublisherDevice(endpoint, seed)
         self.started = False
@@ -40,9 +41,9 @@ class Streamer:
 
     def stop(self):
         """Cleanup and stop interal pystreaming objects."""
-        self.started = False
         self.encoder.stop()
         self.distributor.stop()
+        self.started = False
 
     def send(self, frame):
         """Send a video frame into the stream.
@@ -78,7 +79,7 @@ class Streamer:
         testimage = loadimage(card)
         if animated:
             storage = []
-            for ang in range(360):
+            for ang in range(0, 360, 3):
                 storage.append(
                     cv2.cvtColor(np.asarray(testimage.rotate(ang)), cv2.COLOR_RGB2BGR)
                 )
@@ -99,11 +100,11 @@ class Streamer:
 
 class Worker:
     def __init__(self, source, drain, track="none", reqthread=3, decproc=2):
-        """Map pattern in the Map-Reduce streaming pattern.
+        """Worker in the Map-Reduce streaming pattern.
 
         Args:
-            source (str): Descriptor of map-enabled stream.
-            drain (str): Descriptor of Collector.
+            source (str): Descriptor of Streamer.
+            drain (str): Descriptor of Receiver.
             track (str, optional): Video stream track name. Defaults to "none".
             reqthread (int, optional): Number of request threads. Defaults to 3.
             decproc (int, optional): Number of decoder processes. Defaults to 2.
@@ -111,10 +112,42 @@ class Worker:
         seed = uuid.uuid1().hex
         self.requester = RequesterDevice(source, track, reqthread, seed)
         self.decoder = DecoderDevice(decproc, seed, fwdbuf=True)
-        self.context = zmq.Context.instance()
-        self.drain = self.context.socket(zmq.PUSH)
+        
+        self.drain = zmq.Context.instance().socket(zmq.PUSH)
         self.drain.setsockopt(zmq.SNDHWM, self.outhwm)
         self.drain.connect(self.drain)
+
+    def start(self):
+        """Start internal pystreaming devices."""
+        self.requester.start()
+        self.decoder.start()
+        self.started = True
+
+    def stop(self):
+        """Cleanup and stop interal pystreaming objects."""
+        self.requester.stop()
+        self.decoder.stop()
+        self.started = False
+    
+    def __enter__(self):
+        self.start()
+        return self
+
+    def __exit__(self, exception_type, exception_value, traceback):
+        self.stop()
+    
+    def handler(self):
+        """Returns a handler that is used for worker data handling.
+
+        Returns:
+            generator: Generator that yields dicts with keys {arr, buf, meta, ftime, fno}
+        """
+    
+    def send(self, ):
+        try:
+            intf.send(self.drain, idx, buf=buf, meta=res, flags=zmq.NOBLOCK)
+        except zmq.error.Again:
+            pass # ignore send misses
 
     def run(self, func):
         """Run map-enabled worker. This method blocks.
@@ -131,8 +164,8 @@ class Worker:
                 res = func(arr)
                 print(res)
                 try:
-                    intf.send(self.drain, idx, buf=buf, meta=res, flags=zmq.NOBLOCK)
                 except zmq.error.Again:
+                    
                     pass  # ignore send misses to drain.
 
         finally:
@@ -140,9 +173,9 @@ class Worker:
             self.decoder.stop()
 
 
-class Collector:
+class Receiver:
     def __init__(self, endpoint, nproc=2, mapreduce=False):
-        """Collect frames from  video stream.
+        """Receiver frames from  video stream.
 
         Args:
             endpoint (str): Descriptor of collection endpoint.
@@ -153,6 +186,7 @@ class Collector:
         self.mapreduce = mapreduce
         self.startedonce = False
         if mapreduce:
+            self.receive = PullPushDevice()
             # https://het.as.utexas.edu/HET/Software/pyZMQ/api/zmq.devices.html#zmq.devices.ProcessDevice
             self.device = ProcessDevice(zmq.STREAMER, zmq.PULL, zmq.PUSH)
             self.device.setsockopt_in(zmq.RCVHWM, 10)
@@ -160,7 +194,7 @@ class Collector:
             self.device.bind_in(endpoint)
             self.device.bind_out("ipc:///tmp/decin" + seed)
         else:
-            self.device = SubscriberDevice(endpoint, seed)
+            self.receive = SubscriberDevice(endpoint, seed)
         self.decoder = DecoderDevice(nproc, seed)
         self.started = False
 

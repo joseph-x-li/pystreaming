@@ -60,12 +60,11 @@ class AudioReceiver:
         self.socket.subscribe("")
         self.endpoint = endpoint
 
-    def recv(self, timeout=60_000):
+    def recv(self, timeout):
         """Receive a package of data from the audio channel.
 
         Args:
-            timeout (int, optional): Timeout period in milliseconds.
-                Set to None to wait forever. Defaults to 60_000.
+            timeout (int): Timeout period in milliseconds.
 
         Raises:
             TimeoutError: Raised when no messages are received in the timeout period.
@@ -81,14 +80,14 @@ class AudioReceiver:
                 f"No messages were received within the timeout period {timeout}ms"
             )
 
-    def handler(self, timeout):
+    def handler(self, timeout=0):
         """Yield a package of data from audio channel.
 
         Args:
-            timeout (int): Timeout period in milliseconds.
+            timeout (int, optional): Timeout period in milliseconds. Defaults to 0.
 
         Yields:
-            list: [arr, meta, ftime, fno] or None, if timeout is reached.
+            dict: Expected items, with keys: {arr, meta, ftime, fno}. 
         """
         while True:
             try:
