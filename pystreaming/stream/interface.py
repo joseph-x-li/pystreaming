@@ -36,17 +36,17 @@ def recv(*, socket, arr=False, buf=False, flags=0):
         flags (int, optional): Zmq flags to execute with (zmq.NOBLOCK). Defaults to 0.
 
     Returns:
-        dict: Expected items, with possible keys: {arr, buf, meta, ftime, fno}. 
+        dict: Expected items, with possible keys: {arr, buf, meta, ftime, fno}.
     """
     out = {}
     if arr:
         md = socket.recv_json(flags=flags)
         msg = socket.recv(copy=False, flags=flags)
         arrbuf = memoryview(msg)
-        out['arr'] = np.frombuffer(arrbuf, dtype=md["dtype"]).reshape(md["shape"])
+        out["arr"] = np.frombuffer(arrbuf, dtype=md["dtype"]).reshape(md["shape"])
     if buf:
-        out['buf'] = socket.recv(copy=False, flags=flags)
-    out['meta'] = socket.recv_pyobj(flags=flags)
-    out['ftime'] = socket.recv_pyobj(flags=flags)
-    out['fno'] = socket.recv_pyobj(flags=flags)
+        out["buf"] = socket.recv(copy=False, flags=flags)
+    out["meta"] = socket.recv_pyobj(flags=flags)
+    out["ftime"] = socket.recv_pyobj(flags=flags)
+    out["fno"] = socket.recv_pyobj(flags=flags)
     return out

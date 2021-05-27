@@ -5,10 +5,10 @@ from pystreaming import (
     RequesterDevice,
     PublisherDevice,
     SubscriberDevice,
+    CollectDevice,
 )
 import zmq
 import uuid
-from zmq.devices import ProcessDevice
 from ..stream import interface as intf
 
 
@@ -25,7 +25,7 @@ class Streamer:
         seed = uuid.uuid1().hex
         if tracks is None:
             tracks = ["none"]
-        
+
         self.encoder = EncoderDevice(nproc, seed)
         if mapreduce:
             self.distributor = DistributorDevice(tracks, endpoint, seed)
@@ -54,6 +54,13 @@ class Streamer:
         if not self.started:
             raise RuntimeError("Start the Streamer before sending frames")
         self.encoder.send(frame)
+
+    def __enter__(self):
+        self.start()
+        return self
+
+    def __exit__(self, exception_type, exception_value, traceback):
+        self.stop()
 
     def testcard(self, card, animated=False):
         """Display a testcard or a test image. Automatically starts the device
@@ -90,13 +97,6 @@ class Streamer:
             self.send(storage[i % 360] if animated else storage)
             time.sleep(1 / 30)
 
-    def __enter__(self):
-        self.start()
-        return self
-
-    def __exit__(self, exception_type, exception_value, traceback):
-        self.stop()
-
 
 class Worker:
     def __init__(self, source, drain, track="none", reqthread=3, decproc=2):
@@ -112,7 +112,7 @@ class Worker:
         seed = uuid.uuid1().hex
         self.requester = RequesterDevice(source, track, reqthread, seed)
         self.decoder = DecoderDevice(decproc, seed, fwdbuf=True)
-        
+
         self.drain = zmq.Context.instance().socket(zmq.PUSH)
         self.drain.setsockopt(zmq.SNDHWM, self.outhwm)
         self.drain.connect(self.drain)
@@ -128,54 +128,38 @@ class Worker:
         self.requester.stop()
         self.decoder.stop()
         self.started = False
-    
+
     def __enter__(self):
         self.start()
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
         self.stop()
-    
+
+    @property
     def handler(self):
         """Returns a handler that is used for worker data handling.
 
         Returns:
-            generator: Generator that yields dicts with keys {arr, buf, meta, ftime, fno}
+            generator: Generator that yields dicts with keys {arr, buf, meta, ftime, fno}.
         """
-    
-    def send(self, ):
+        return self.decoder.handler
+
+    def send(self, data):
+        del data["arr"]
         try:
-            intf.send(self.drain, idx, buf=buf, meta=res, flags=zmq.NOBLOCK)
+            intf.send(
+                socket=self.drain,
+                flags=zmq.NOBLOCK,
+                **data,
+            )
         except zmq.error.Again:
-            pass # ignore send misses
-
-    def run(self, func):
-        """Run map-enabled worker. This method blocks.
-
-        Args:
-            func (function): Stream-mapped function.
-        """
-        if self.drain is None:
-            
-        try:
-            self.decoder.start()
-            self.requester.start()
-            for arr, buf, idx in self.decoder.handler():
-                res = func(arr)
-                print(res)
-                try:
-                except zmq.error.Again:
-                    
-                    pass  # ignore send misses to drain.
-
-        finally:
-            self.requester.stop()
-            self.decoder.stop()
+            pass  # ignore send misses
 
 
 class Receiver:
     def __init__(self, endpoint, nproc=2, mapreduce=False):
-        """Receiver frames from  video stream.
+        """Receiver frames from a video stream.
 
         Args:
             endpoint (str): Descriptor of collection endpoint.
@@ -186,13 +170,7 @@ class Receiver:
         self.mapreduce = mapreduce
         self.startedonce = False
         if mapreduce:
-            self.receive = PullPushDevice()
-            # https://het.as.utexas.edu/HET/Software/pyZMQ/api/zmq.devices.html#zmq.devices.ProcessDevice
-            self.device = ProcessDevice(zmq.STREAMER, zmq.PULL, zmq.PUSH)
-            self.device.setsockopt_in(zmq.RCVHWM, 10)
-            self.device.setsockopt_out(zmq.SNDHWM, 10)
-            self.device.bind_in(endpoint)
-            self.device.bind_out("ipc:///tmp/decin" + seed)
+            self.receive = CollectDevice(endpoint, seed)
         else:
             self.receive = SubscriberDevice(endpoint, seed)
         self.decoder = DecoderDevice(nproc, seed)
@@ -200,30 +178,13 @@ class Receiver:
 
     def start(self):
         """Start internal pystreaming objects."""
-        self.started = True
         self.decoder.start()
-        if self.startedonce and self.mapreduce:
-            return
-        self.device.start()
-        self.startedonce = True
-
-    @property
-    def handler(self):
-        """Returns a handler that is used for future data handling.
-
-        Returns:
-            generator: Generator that yields [arr, meta, ftime, fno]
-        """
-        return self.decoder.handler
-
-    @property
-    def recv(self):
-        return self.decoder.recv
+        self.receive.start()
+        self.started = True
 
     def stop(self):
         """Cleanup and stop interal pystreaming objects."""
-        if not self.mapreduce:
-            self.device.stop()
+        self.receive.stop()
         self.decoder.stop()
         self.started = False
 
@@ -233,3 +194,12 @@ class Receiver:
 
     def __exit__(self, exception_type, exception_value, traceback):
         self.stop()
+
+    @property
+    def handler(self):
+        """Returns a handler that is used for future data handling.
+
+        Returns:
+            generator: Generator that yields dicts with keys {arr, meta, ftime, fno}.
+        """
+        return self.decoder.handler

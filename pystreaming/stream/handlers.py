@@ -1,6 +1,7 @@
 import time
 from collections import OrderedDict, deque
 
+
 def buffer(bufferlen, handlers):
     assert isinstance(handlers, dict)
     handlers = {k: handlers[k]() for k in handlers}
@@ -32,6 +33,7 @@ def buffer(bufferlen, handlers):
                 # yield data if time is right
                 if mint < time.time() + tdelta - bufferlen:
                     yield (k, buffer.pop(mint))
+
 
 def display(frame, BGR=True):
     """Display a frame using OpenCV.

@@ -1,6 +1,6 @@
 import zmq
 import time
-from ..video import interface as intf
+from ..stream import interface as intf
 from . import STR_HWM, RCV_HWM
 
 
@@ -87,7 +87,7 @@ class AudioReceiver:
             timeout (int, optional): Timeout period in milliseconds. Defaults to 0.
 
         Yields:
-            dict: Expected items, with keys: {arr, meta, ftime, fno}. 
+            dict: Expected items, with keys: {arr, meta, ftime, fno}.
         """
         while True:
             try:

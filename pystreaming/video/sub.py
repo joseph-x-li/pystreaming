@@ -19,9 +19,7 @@ def subpush_ps(*, shutdown, barrier, infd, outfd):
     while not shutdown.is_set():
         target = time.time() + SUB_TIMESTEP
         if socket.poll(0):
-            data = intf.recv(
-                socket=socket, buf=True, flags=zmq.NOBLOCK
-            )
+            data = intf.recv(socket=socket, buf=True, flags=zmq.NOBLOCK)
             try:
                 intf.send(
                     socket=out,

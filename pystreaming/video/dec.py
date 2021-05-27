@@ -21,17 +21,15 @@ def dec_ps(*, shutdown, barrier, infd, outfd, fwdbuf):
     while not shutdown.is_set():
         target = time.time() + DEC_TIMESTEP
         if socket.poll(0):
-            data = intf.recv(
-                socket=socket, buf=True, flags=zmq.NOBLOCK
-            )
+            data = intf.recv(socket=socket, buf=True, flags=zmq.NOBLOCK)
             try:
                 intf.send(
                     socket=out,
-                    fno=data['fno'],
-                    ftime=data['ftime'],
-                    meta=data['meta'],
-                    arr=decoder(data['buf']),
-                    buf=data['buf'] if fwdbuf else None,
+                    fno=data["fno"],
+                    ftime=data["ftime"],
+                    meta=data["meta"],
+                    arr=decoder(data["buf"]),
+                    buf=data["buf"] if fwdbuf else None,
                     flags=zmq.NOBLOCK,
                 )
             except zmq.error.Again:

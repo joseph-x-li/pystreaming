@@ -43,7 +43,7 @@ class CollectDevice(Device):
             seed (str): File descriptor seed (to prevent ipc collisions).
         """
         self.infd = endpoint
-        self.outfd = "ipc:///tmp/encout" + seed
+        self.outfd = "ipc:///tmp/decin" + seed
         dkwargs = {"infd": self.infd, "outfd": self.outfd}
         super().__init__(collect_ps, dkwargs, 1)
 

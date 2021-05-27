@@ -4,9 +4,9 @@ class Tape:
         self.shape = self.dtype = None
         self.buffer = {}
         self.frames = set()
-        
+
     def write(self, data):
         ...
-        
+
     def read(self, left, right):
         ...

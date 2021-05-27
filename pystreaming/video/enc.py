@@ -27,11 +27,9 @@ def enc_ps(*, shutdown, barrier, infd, outfd):
     while not shutdown.is_set():
         target = time.time() + ENC_TIMESTEP
         if socket.poll(0):
-            data = intf.recv(
-                socket=socket, arr=True, flags=zmq.NOBLOCK
-            )
-            data['buf'] = encoder(data['arr'])
-            del data['arr']
+            data = intf.recv(socket=socket, arr=True, flags=zmq.NOBLOCK)
+            data["buf"] = encoder(data["arr"])
+            del data["arr"]
             try:
                 intf.send(
                     socket=out,
