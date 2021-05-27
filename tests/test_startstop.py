@@ -21,11 +21,21 @@ def teststartstop():
         ps.RequesterDevice("tcp://localhost:5557", "none", 3, "e"),
         ps.SubscriberDevice("tcp://127.0.0.1:5558", "f"),
         ps.CollectDevice("tcp://*:5559", "g"),
-        # ps.Streamer(context, "tcp://*:5559"),
-        # ps.Streamer(context, "tcp://*:5560", mapreduce=True),
-        # ps.Collector(context, "tcp://localhost:5561"),
-        # ps.Collector(context, "tcp://*:5562", mapreduce=True),
-        # ps.Worker(),
     ]
     for dev in devices:
         stopandgo(dev)
+
+def testpatterns():
+    patterns = [
+        ps.Streamer("tcp://*:5560"),
+        ps.Streamer("tcp://*:5561", mapreduce=True),
+        ps.Receiver("tcp://localhost:5562"),
+        ps.Receiver("tcp://*:5563", mapreduce=True),
+        ps.Worker("tcp://localhost:5564", "tcp://localhost:5565"),
+    ]
+    for pattern in patterns:
+        with pattern:
+            time.sleep(1)
+        time.sleep(1)
+        with pattern:
+            time.sleep(1)

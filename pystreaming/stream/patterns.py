@@ -10,6 +10,7 @@ from pystreaming import (
 import zmq
 import uuid
 from ..stream import interface as intf
+from . import WORKER_HWM
 
 
 class Streamer:
@@ -114,8 +115,8 @@ class Worker:
         self.decoder = DecoderDevice(decproc, seed, fwdbuf=True)
 
         self.drain = zmq.Context.instance().socket(zmq.PUSH)
-        self.drain.setsockopt(zmq.SNDHWM, self.outhwm)
-        self.drain.connect(self.drain)
+        self.drain.setsockopt(zmq.SNDHWM, WORKER_HWM)
+        self.drain.connect(drain)
 
     def start(self):
         """Start internal pystreaming devices."""
