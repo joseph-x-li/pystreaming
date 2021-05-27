@@ -22,5 +22,5 @@ Solves real-time map-reduce video streaming problem, but can also be used for ge
     from pystreaming import Receiver, collate, display
     import zmq
     with Receiver("tcp://localhost:5555") as stream:
-        for _, data in buffer(0.5, [stream.handler]):
+        for _, data in buffer(0.5, {'video': stream.handler}):
             display(data['arr'])

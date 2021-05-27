@@ -3,6 +3,16 @@ from collections import OrderedDict, deque
 
 
 def buffer(bufferlen, handlers):
+    """Buffer and reorder incoming packets of data.
+
+    Args:
+        bufferlen ([type]): Length of buffer, in seconds.
+        handlers (dict): Dictionary of str: generator.
+            The key is a stream name, the value is an unprimed generator.
+
+    Yields:
+        tuple(str, data): str is stream name, data is data packet from corresponding handler.
+    """
     assert isinstance(handlers, dict)
     handlers = {k: handlers[k]() for k in handlers}
     buffers = {k: OrderedDict() for k in handlers}
@@ -13,11 +23,11 @@ def buffer(bufferlen, handlers):
             buffer = buffers[k]
 
             if data is None:
-                # handler hit
+                # handler miss
                 time.sleep(0.001)
             else:
-                # handler miss
-                data, meta, ftime, fno = data
+                # handler hit
+                ftime = data["ftime"]
                 if tdelta is None:
                     tdelta = ftime - time.time()
 
@@ -26,7 +36,7 @@ def buffer(bufferlen, handlers):
                     continue
 
                 # packet is fresh. write data to buffer
-                buffer[ftime] = (data, meta, ftime)
+                buffer[ftime] = data
 
             if buffer.keys():  # if buffer is not empty
                 mint = min(buffer.keys())
