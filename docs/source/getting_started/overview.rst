@@ -8,18 +8,19 @@ Solves real-time map-reduce video streaming problem, but can also be used for ge
 
 .. code-block:: Python
 
-    import pystreaming, cv2, zmq
-    stream, cap = pystreaming.Streamer(zmq.Context(), "tcp://*:5555"), cv2.VideoCapture(0)
-    stream.start()
-    while True:
-        stream.send(cap.read()[1])
+    import pystreaming, cv2
+    cap = cv2.VideoCapture(0)
+    with pystreaming.Streamer("tcp://*:5555") as stream:
+        while True:
+            stream.send(cap.read()[1])
 
 
-4 line stream P2P receiving example. Receives a video stream from localhost port 5555 and displays it using OpenCV.
+5 line stream P2P receiving example. Receives a video stream from localhost port 5555 and displays it using OpenCV.
 
 .. code-block:: Python
 
-    from pystreaming import Collector, collate, display
+    from pystreaming import Receiver, collate, display
     import zmq
-    stream = Collector(zmq.Context(), "tcp://127.0.0.1:5555")
-    display(collate(stream.handler(), getter=lambda x : x[0], None, x[1]), getter=lambda x : x[0])
+    with Receiver("tcp://localhost:5555") as stream:
+        for _, data in buffer(0.5, [stream.handler]):
+            display(data['arr'])

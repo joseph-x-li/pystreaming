@@ -28,7 +28,8 @@ copyright = "2020, Joseph Li"
 author = "Joseph Li"
 
 # The full version, including alpha/beta/rc tags
-version = release = open("../VERSION.txt").read().strip()
+with open("../VERSION.txt") as f:
+    version = release = f.read().strip()
 
 
 # -- General configuration ---------------------------------------------------

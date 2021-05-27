@@ -3,6 +3,8 @@ Using Handlers
 **************
 
 
+THIS ENTIRE SECTION NEEDS TO BE REWRITTED 
+
 When receiving a stream, pystreaming utilizes generators to hand computation between different stream handlers.
 
 The collector handler is used to access frames decoded in the Decoder.

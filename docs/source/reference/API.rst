@@ -10,11 +10,9 @@ Basic API Interface
 .. autosummary::
 	:nosignatures: 
 	
-	pystreaming.video.patterns.Streamer
-	pystreaming.video.patterns.Worker
-	pystreaming.video.patterns.Collector
-    pystreaming.video.handlers.collate
-    pystreaming.video.handlers.display
+	pystreaming.Streamer
+	pystreaming.Worker
+	pystreaming.Receiver
 
 
 Internal API Interface
@@ -23,11 +21,12 @@ Internal API Interface
 .. autosummary::
 	:nosignatures: 
 	
-	pystreaming.video.enc.Encoder
-	pystreaming.video.dec.Decoder
-	pystreaming.video.dist.Distributor
-	pystreaming.video.req.Requester
-	pystreaming.video.pub.Publisher
-	pystreaming.video.sub.Subscriber
+	pystreaming.video.collect.CollectDevice
+	pystreaming.video.enc.EncoderDevice
+	pystreaming.video.dec.DecoderDevice
+	pystreaming.video.dist.DistributorDevice
+	pystreaming.video.req.RequesterDevice
+	pystreaming.video.pub.PublisherDevice
+	pystreaming.video.sub.SubscriberDevice
     pystreaming.listlib.circularlist.CircularList
     pystreaming.listlib.circulardict.CircularOrderedDict
