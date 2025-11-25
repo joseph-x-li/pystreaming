@@ -41,7 +41,7 @@ jobs:
 
       - name: Type check with ty
         run: |
-          uvx ty check pystreaming
+          uv run ty check pystreaming
 
       - name: Test with pytest
         run: |
