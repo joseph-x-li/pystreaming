@@ -104,7 +104,12 @@ def test_circular_dict():
     except KeyError:
         pass
 
-    assert cd.__repr__() == "OrderedDict([(2, -100), (4, 4), (5, 5), (6, 6), (3, 100)])"
+    # Python 3.12+ uses dict-style repr, older versions use list-style
+    repr_str = cd.__repr__()
+    assert repr_str in (
+        "OrderedDict([(2, -100), (4, 4), (5, 5), (6, 6), (3, 100)])",
+        "OrderedDict({2: -100, 4: 4, 5: 5, 6: 6, 3: 100})",
+    ), f"Unexpected repr: {repr_str}"
 
     cd.delete(2)
     assert len(cd) == 4
