@@ -27,25 +27,29 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Create virtual environment
+        run: |
+          uv venv
+
       - name: Install dependencies
         run: |
-          uv pip install --system -e ".[dev]"
+          uv pip install -e ".[dev]"
 
       - name: Lint with ruff
         run: |
-          uv run --system ruff check pystreaming tests
+          uv run ruff check pystreaming tests
 
       - name: Format check with ruff
         run: |
-          uv run --system ruff format --check pystreaming tests
+          uv run ruff format --check pystreaming tests
 
       - name: Type check with ty
         run: |
-          uv run --system ty check pystreaming
+          uv run ty check pystreaming
 
       - name: Test with pytest
         run: |
-          uv run --system pytest tests/ --cov=pystreaming --cov-report=xml --cov-report=term-missing
+          uv run pytest tests/ --cov=pystreaming --cov-report=xml --cov-report=term-missing
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
