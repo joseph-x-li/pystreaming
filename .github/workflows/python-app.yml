@@ -33,19 +33,19 @@ jobs:
 
       - name: Lint with ruff
         run: |
-          uv run ruff check pystreaming tests
+          uv run --system ruff check pystreaming tests
 
       - name: Format check with ruff
         run: |
-          uv run ruff format --check pystreaming tests
+          uv run --system ruff format --check pystreaming tests
 
       - name: Type check with ty
         run: |
-          uv run ty check pystreaming
+          uv run --system ty check pystreaming
 
       - name: Test with pytest
         run: |
-          uv run pytest tests/ --cov=pystreaming --cov-report=xml --cov-report=term-missing
+          uv run --system pytest tests/ --cov=pystreaming --cov-report=xml --cov-report=term-missing
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
