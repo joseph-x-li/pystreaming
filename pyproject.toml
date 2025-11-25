@@ -29,10 +29,10 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=7.0",
-    "pytest-cov>=4.0",
-    "ruff>=0.1.0",
-    "ty>=0.0.1",  # Type checker
+    "pytest",
+    "pytest-cov",
+    "ruff",
+    "ty",  # Type checker
     "Pillow",  # Required for test_testimages
 ]
 docs = [
