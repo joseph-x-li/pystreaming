@@ -3,7 +3,7 @@ import time
 import pystreaming as ps
 
 
-def teststartstop():
+def test_start_stop():
     def stopandgo(x):
         x.start()
         time.sleep(1)
@@ -25,7 +25,7 @@ def teststartstop():
     for dev in devices:
         stopandgo(dev)
 
-def testpatterns():
+def test_patterns():
     patterns = [
         ps.Streamer("tcp://*:5560"),
         ps.Streamer("tcp://*:5561", mapreduce=True),

@@ -37,7 +37,7 @@ async def aioreq(context, source, track, drain, lock):
                 await drain.send_pyobj(meta, flags=zmq.SNDMORE | zmq.NOBLOCK)
                 await drain.send_pyobj(ftime, flags=zmq.SNDMORE | zmq.NOBLOCK)
                 await drain.send_pyobj(fno, flags=zmq.NOBLOCK)
-        except zmq.error.Again:
+        except zmq.error.Again:  # type: ignore[attr-defined]
             pass
 
 
@@ -92,5 +92,5 @@ class RequesterDevice(Device):
         rpr += f"{'TRACK': <8}{self.track}\n"
         rpr += f"{'IN': <8}{self.source}\n"
         rpr += f"{'OUT': <8}{self.outfd}\n"
-        rpr += f"{'HWM': <8}> XX)({REQ_HWM} >"
+        rpr += f"{'HWM': <8}(XX > {REQ_HWM})"
         return rpr

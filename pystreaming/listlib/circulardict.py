@@ -1,8 +1,9 @@
 from collections import OrderedDict
+from typing import Any, Tuple
 
 
 class CircularOrderedDict:
-    def __init__(self, maxsize):
+    def __init__(self, maxsize: int) -> None:
         """A dictionary that never exceeds a given size. If the size limit is reached,
         the least recently inserted element is removed.
 
@@ -10,14 +11,14 @@ class CircularOrderedDict:
             maxsize (int): Maximum size of the dictionary.
 
         Raises:
-            ValueError: Raised if maxsize argument is not a positve integer.
+            ValueError: Raised if maxsize argument is not a positive integer.
         """
         if maxsize <= 0:
             raise ValueError("Maxsize must be greater than zero")
-        self.dict = OrderedDict()
+        self.dict: OrderedDict[Any, Any] = OrderedDict()
         self.maxsize = maxsize
 
-    def pop_front(self):
+    def pop_front(self) -> Tuple[Any, Any]:
         """Pop key, value pair from front of dictionary.
 
         Returns:
@@ -25,7 +26,7 @@ class CircularOrderedDict:
         """
         return self.dict.popitem(last=False)
 
-    def insert_end(self, key, value):
+    def insert_end(self, key: Any, value: Any) -> None:
         """Insert key-value pair into end of dictionary. If the key already
         exists, the key-value pair will be moved to the end of the dictionary
         and the value will be updated.
@@ -40,7 +41,7 @@ class CircularOrderedDict:
         if len(self.dict) > self.maxsize:
             self.dict.popitem(last=False)
 
-    def delete(self, key):
+    def delete(self, key: Any) -> None:
         """Delete an entry from the dictionary
 
         Args:
@@ -48,7 +49,7 @@ class CircularOrderedDict:
         """
         del self.dict[key]
 
-    def keys(self):
+    def keys(self) -> Any:  # Returns odict_keys which is not easily typed
         """Retrieve all keys in the dictionary, from earliest to latest.
 
         Returns:
@@ -56,7 +57,7 @@ class CircularOrderedDict:
         """
         return self.dict.keys()
 
-    def __len__(self):
+    def __len__(self) -> int:
         """Number of key-value pairs in the dictionary.
 
         Returns:
@@ -64,7 +65,7 @@ class CircularOrderedDict:
         """
         return len(self.dict)
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: Any, value: Any) -> None:
         """Update a key-value pair, without changing its position in the
         dictionary.
 
@@ -79,7 +80,7 @@ class CircularOrderedDict:
             raise KeyError(str(key) + " use insert_end to add an element")
         self.dict[key] = value
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: Any) -> Any:
         """Retrieve a value from the dictionary.
 
         Args:
@@ -90,5 +91,5 @@ class CircularOrderedDict:
         """
         return self.dict[key]
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self.dict.__repr__()

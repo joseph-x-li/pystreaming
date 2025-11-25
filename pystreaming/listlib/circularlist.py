@@ -1,14 +1,19 @@
+from typing import Any, TypeVar
+
+T = TypeVar("T")
+
+
 class Empty(Exception):
     """Raised when trying to pop from an empty queue"""
 
-    def __init__(self, calltype):
+    def __init__(self, calltype: str) -> None:
         super().__init__(f"Tried to pop from an empty {calltype}")
 
 
 class CircularList:
     """Fixed size list with push-overwrite capabilities."""
 
-    def __init__(self, maxsize=10):
+    def __init__(self, maxsize: int = 10) -> None:
         """Initialize a Circular List with maximum size.
 
         Args:
@@ -17,7 +22,7 @@ class CircularList:
                 Defaults to 10.
 
         Raises:
-            ValueError: Raised if maxsize argument is not a positve integer.
+            ValueError: Raised if maxsize argument is not a positive integer.
         """
         if maxsize <= 0:
             raise ValueError("Maxsize must be greater than zero")
@@ -27,9 +32,9 @@ class CircularList:
         self.size = 0
 
         self.maxsize = maxsize
-        self._array = [None] * maxsize
+        self._array: list[Any] = [None] * maxsize
 
-    def push(self, item):
+    def push(self, item: Any) -> None:
         """Push an element FIFO (queue) style.
 
         Args:
@@ -45,7 +50,7 @@ class CircularList:
             self._back = (self._back + 1) % self.maxsize
             self.size += 1
 
-    def pop(self):
+    def pop(self) -> Any:
         """Pop an element off FIFO (queue) style.
 
         Raises:
@@ -62,10 +67,10 @@ class CircularList:
             self._front = (self._front + 1) % self.maxsize
             return ret
 
-    def __len__(self):
+    def __len__(self) -> int:
         return self.size
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx: int) -> Any:
         """Gets the nth element of the list.
         Elements at the front of the list (would be popped off) are at index 0.
 
@@ -82,7 +87,7 @@ class CircularList:
             raise IndexError(f"list index {idx} out of range: [0, {self.size})")
         return self._array[(self._front + idx) % self.maxsize]
 
-    def __setitem__(self, idx, new_val):
+    def __setitem__(self, idx: int, new_val: Any) -> None:
         """Sets the nth element of the list.
         Elements at the front of the list (would be popped off) are at index 0.
 
@@ -97,10 +102,10 @@ class CircularList:
             raise IndexError(f"list index {idx} out of range: [0, {self.size})")
         self._array[(self._front + idx) % self.maxsize] = new_val
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self._array.__repr__() + f" front: {self._front} back: {self._back}"
 
-    def full(self):
+    def full(self) -> bool:
         """Check whether the current list size is the maximum size.
 
         Returns:

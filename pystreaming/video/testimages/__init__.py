@@ -1,11 +1,13 @@
-TEST_S = 0
-TEST_M = 1
-TEST_L = 2
-IMAG_S = 3
-IMAG_M = 4
-IMAG_L = 5
+from typing import List
 
-_lookup = [
+TEST_S: int = 0
+TEST_M: int = 1
+TEST_L: int = 2
+IMAG_S: int = 3
+IMAG_M: int = 4
+IMAG_L: int = 5
+
+_lookup: List[str] = [
     "640x480_c.png",
     "1280x720_c.png",
     "1920x1080_c.png",
@@ -15,7 +17,7 @@ _lookup = [
 ]
 
 
-def loadimage(enum):
+def loadimage(enum: int):  # type: ignore[return]  # PIL.Image not easily typed
     """Load a test image or a test card.
 
     Args:

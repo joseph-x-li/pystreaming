@@ -1,8 +1,14 @@
 import time
 from collections import OrderedDict, deque
+from typing import Any, Callable, Dict, Generator, Tuple
+
+import numpy as np
 
 
-def buffer(bufferlen, handlers):
+def buffer(
+    bufferlen: float,
+    handlers: Dict[str, Callable[[], Generator[Dict[str, Any] | None, None, None]]],
+) -> Generator[Tuple[str, Dict[str, Any]], None, None]:
     """Buffer and reorder incoming packets of data.
 
     Args:
@@ -14,11 +20,14 @@ def buffer(bufferlen, handlers):
         tuple(str, data): str is stream name, data is data packet from corresponding handler.
     """
     assert isinstance(handlers, dict)
-    handlers = {k: handlers[k]() for k in handlers}
-    buffers = {k: OrderedDict() for k in handlers}
-    tdelta = None
+    # Prime the generators by calling them
+    primed_handlers: Dict[str, Generator[Dict[str, Any] | None, None, None]] = {
+        k: handlers[k]() for k in handlers
+    }
+    buffers = {k: OrderedDict() for k in primed_handlers}
+    tdelta: float | None = None
     while True:
-        for k, handler in handlers.items():
+        for k, handler in primed_handlers.items():
             data = next(handler)
             buffer = buffers[k]
 
@@ -32,7 +41,7 @@ def buffer(bufferlen, handlers):
                     tdelta = ftime - time.time()
 
                 # skip if packet is stale
-                if ftime < time.time() + tdelta - bufferlen:
+                if tdelta is not None and ftime < time.time() + tdelta - bufferlen:
                     continue
 
                 # packet is fresh. write data to buffer
@@ -41,11 +50,11 @@ def buffer(bufferlen, handlers):
             if buffer.keys():  # if buffer is not empty
                 mint = min(buffer.keys())
                 # yield data if time is right
-                if mint < time.time() + tdelta - bufferlen:
+                if tdelta is not None and mint < time.time() + tdelta - bufferlen:
                     yield (k, buffer.pop(mint))
 
 
-def display(frame, BGR=True):
+def display(frame: np.ndarray, BGR: bool = True) -> None:
     """Display a frame using OpenCV.
 
     Press [ESC] to stop.
@@ -57,7 +66,7 @@ def display(frame, BGR=True):
     Raises:
         KeyboardInterrupt: Raised when [ESC] is pressed. Catch this exception to gracefully exit the stream.
     """
-    import cv2
+    import cv2  # type: ignore[import-untyped]
 
     if not BGR:
         frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
@@ -66,7 +75,11 @@ def display(frame, BGR=True):
         raise KeyboardInterrupt("StopStream")
 
 
-def dispfps(handler, n=100, write=False):
+def dispfps(
+    handler: Generator[Dict[str, Any], None, None],
+    n: int = 100,
+    write: bool = False,
+) -> Generator[Dict[str, Any], None, None]:
     """Average iterations per second over last n iterations.
 
     Args:
@@ -79,7 +92,7 @@ def dispfps(handler, n=100, write=False):
         pyobj: Forwards data from handler
     """
     if write:
-        import cv2
+        import cv2  # type: ignore[import-untyped]
     times = deque()
     for data in handler:
         end = time.time()

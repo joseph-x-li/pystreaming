@@ -34,14 +34,14 @@ class AudioStreamer:
                 arr=arr,
                 flags=zmq.NOBLOCK,
             )
-        except zmq.error.Again:
+        except zmq.error.Again:  # type: ignore[attr-defined]
             pass
         self.fno += 1
 
     def __repr__(self):
         rpr = "-----AudioStreamer-----\n"
         rpr += f"{'OUT': <8}{self.endpoint}\n"
-        rpr += f"{'HWM': <8}({STR_HWM} >"
+        rpr += f"{'HWM': <8}(XX > {STR_HWM})"
         return rpr
 
 

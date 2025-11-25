@@ -32,7 +32,7 @@ def dec_ps(*, shutdown, barrier, infd, outfd, fwdbuf):
                     buf=data["buf"] if fwdbuf else None,
                     flags=zmq.NOBLOCK,
                 )
-            except zmq.error.Again:
+            except zmq.error.Again:  # type: ignore[attr-defined]
                 pass
         missing = target - time.time()
         if missing > 0:
@@ -104,5 +104,5 @@ class DecoderDevice(Device):
         rpr += f"{'FWDBUF': <8}{self.fwdbuf}\n"
         rpr += f"{'IN': <8}{self.infd}\n"
         rpr += f"{'OUT': <8}{self.outfd}\n"
-        rpr += f"{'HWM': <8}> {DEC_HWM})({DEC_HWM} > {DEC_HWM})"
+        rpr += f"{'HWM': <8}({DEC_HWM} > {DEC_HWM})"
         return rpr

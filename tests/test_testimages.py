@@ -1,7 +1,7 @@
 import pystreaming as ps
 
 
-def test_testiamges():
+def test_test_images():
     enums = [
         ps.TEST_S,
         ps.TEST_M,

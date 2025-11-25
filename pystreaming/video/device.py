@@ -1,8 +1,14 @@
 import multiprocessing as mp
+from typing import Any, Callable, Dict, List
 
 
 class Device:
-    def __init__(self, dfunc, dkwargs, nproc):
+    def __init__(
+        self,
+        dfunc: Callable[..., None],
+        dkwargs: Dict[str, Any],
+        nproc: int,
+    ) -> None:
         """Background running device.
 
         Args:
@@ -18,9 +24,9 @@ class Device:
         self.shutdown = mp.Event()
         dkwargs["barrier"] = self.barrier
         dkwargs["shutdown"] = self.shutdown
-        self.processes = []
+        self.processes: List[mp.Process] = []
 
-    def start(self):
+    def start(self) -> None:
         """Start background processes. Does nothing if already started."""
         if self.processes != []:
             return
@@ -29,14 +35,34 @@ class Device:
         for ps in self.processes:
             ps.daemon = True
             ps.start()
-        self.barrier.wait()
+        try:
+            self.barrier.wait()
+        except mp.BrokenBarrierError:  # type: ignore[attr-defined]
+            # Clean up processes if barrier times out
+            self.shutdown.set()
+            for ps in self.processes:
+                ps.join(timeout=1)
+            self.processes = []
+            self.shutdown.clear()
+            raise RuntimeError(
+                "Failed to start device processes: barrier timeout. "
+                "Processes may have failed to initialize."
+            )
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop background processes. Does nothing if already stopped."""
         if self.processes == []:
             return
         self.shutdown.set()
         for ps in self.processes:
-            ps.join()
+            ps.join(timeout=5)
+            if ps.is_alive():
+                # Process didn't terminate gracefully, force terminate
+                ps.terminate()
+                ps.join(timeout=1)
+                if ps.is_alive():
+                    # Still alive, kill it
+                    ps.kill()
+                    ps.join()
         self.processes = []
         self.shutdown.clear()

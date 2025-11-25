@@ -1,8 +1,19 @@
-import zmq
+from typing import Any, Optional
+
 import numpy as np
+import zmq
 
 
-def send(*, socket, fno, ftime, meta, arr=None, buf=None, flags=0):
+def send(
+    *,
+    socket: zmq.Socket,
+    fno: int,
+    ftime: float,
+    meta: Any,
+    arr: Optional[np.ndarray] = None,
+    buf: Optional[bytes] = None,
+    flags: int = 0,
+) -> None:
     """Internal video data send command.
 
     Args:
@@ -26,7 +37,13 @@ def send(*, socket, fno, ftime, meta, arr=None, buf=None, flags=0):
     socket.send_pyobj(fno, flags=flags)
 
 
-def recv(*, socket, arr=False, buf=False, flags=0):
+def recv(
+    *,
+    socket: zmq.Socket,
+    arr: bool = False,
+    buf: bool = False,
+    flags: int = 0,
+) -> dict[str, Any]:
     """Internal video data receive command.
 
     Args:

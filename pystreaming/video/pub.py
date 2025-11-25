@@ -25,7 +25,7 @@ def pullpub_ps(*, shutdown, barrier, infd, outfd):
                     flags=zmq.NOBLOCK,
                     **data,
                 )
-            except zmq.error.Again:
+            except zmq.error.Again:  # type: ignore[attr-defined]
                 pass
         missing = target - time.time()
         if missing > 0:
@@ -51,5 +51,5 @@ class PublisherDevice(Device):
         rpr = "-----PublisherDevice-----\n"
         rpr += f"{'IN': <8}{self.infd}\n"
         rpr += f"{'OUT': <8}{self.outfd}\n"
-        rpr += f"{'HWM': <8}> {PUB_HWM})({PUB_HWM} >"
+        rpr += f"{'HWM': <8}({PUB_HWM} > {PUB_HWM})"
         return rpr

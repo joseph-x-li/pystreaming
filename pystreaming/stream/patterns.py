@@ -1,3 +1,9 @@
+from typing import Any, Generator, List, Optional
+
+import numpy as np
+import zmq
+import uuid
+
 from pystreaming import (
     EncoderDevice,
     DistributorDevice,
@@ -7,14 +13,18 @@ from pystreaming import (
     SubscriberDevice,
     CollectDevice,
 )
-import zmq
-import uuid
 from ..stream import interface as intf
 from . import WORKER_HWM
 
 
 class Streamer:
-    def __init__(self, endpoint, tracks=None, nproc=2, mapreduce=False):
+    def __init__(
+        self,
+        endpoint: str,
+        tracks: Optional[List[str]] = None,
+        nproc: int = 2,
+        mapreduce: bool = False,
+    ) -> None:
         """Video streamer with P2P and Map-Reduce functionality.
 
         Args:
@@ -32,21 +42,21 @@ class Streamer:
             self.distributor = DistributorDevice(tracks, endpoint, seed)
         else:
             self.distributor = PublisherDevice(endpoint, seed)
-        self.started = False
+        self.started: bool = False
 
-    def start(self):
+    def start(self) -> None:
         """Start internal pystreaming devices."""
         self.encoder.start()
         self.distributor.start()
         self.started = True
 
-    def stop(self):
-        """Cleanup and stop interal pystreaming objects."""
+    def stop(self) -> None:
+        """Cleanup and stop internal pystreaming objects."""
         self.encoder.stop()
         self.distributor.stop()
         self.started = False
 
-    def send(self, frame):
+    def send(self, frame: np.ndarray) -> None:
         """Send a video frame into the stream.
 
         Args:
@@ -56,14 +66,19 @@ class Streamer:
             raise RuntimeError("Start the Streamer before sending frames")
         self.encoder.send(frame)
 
-    def __enter__(self):
+    def __enter__(self) -> "Streamer":
         self.start()
         return self
 
-    def __exit__(self, exception_type, exception_value, traceback):
+    def __exit__(
+        self,
+        exception_type: Optional[type[BaseException]],
+        exception_value: Optional[BaseException],
+        traceback: Optional[Any],
+    ) -> None:
         self.stop()
 
-    def testcard(self, card, animated=False):
+    def testcard(self, card: int, animated: bool = False) -> None:
         """Display a testcard or a test image. Automatically starts the device
         if not already started. This method is blocking.
 
@@ -77,7 +92,7 @@ class Streamer:
                 pystreaming.IMAG_L
             animated (bool, optional): Set True to make image rotate. Defaults to False.
         """
-        import cv2
+        import cv2  # type: ignore[import-untyped]
         import numpy as np
         from itertools import count
         import time
@@ -92,10 +107,11 @@ class Streamer:
                     cv2.cvtColor(np.asarray(testimage.rotate(ang)), cv2.COLOR_RGB2BGR)
                 )
         else:
-            storage = np.asarray(testimage)
+            storage: np.ndarray = np.asarray(testimage)
         for i in count():
             print(i)
-            self.send(storage[i % 360] if animated else storage)
+            frame = storage[i % 360] if animated else storage
+            self.send(frame if isinstance(frame, np.ndarray) else np.asarray(frame))
             time.sleep(1 / 30)
 
 
@@ -125,7 +141,7 @@ class Worker:
         self.started = True
 
     def stop(self):
-        """Cleanup and stop interal pystreaming objects."""
+        """Cleanup and stop internal pystreaming objects."""
         self.requester.stop()
         self.decoder.stop()
         self.started = False
@@ -154,7 +170,7 @@ class Worker:
                 flags=zmq.NOBLOCK,
                 **data,
             )
-        except zmq.error.Again:
+        except zmq.error.Again:  # type: ignore[attr-defined]
             pass  # ignore send misses
 
 
@@ -184,7 +200,7 @@ class Receiver:
         self.started = True
 
     def stop(self):
-        """Cleanup and stop interal pystreaming objects."""
+        """Cleanup and stop internal pystreaming objects."""
         self.receive.stop()
         self.decoder.stop()
         self.started = False

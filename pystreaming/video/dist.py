@@ -66,5 +66,5 @@ class DistributorDevice(Device):
         rpr += f"{'TRACKS': <8}{self.tracks}\n"
         rpr += f"{'IN': <8}{self.infd}\n"
         rpr += f"{'OUT': <8}{self.endpoint}\n"
-        rpr += f"{'HWM': <8}> {DIST_HWM})(XX >"
+        rpr += f"{'HWM': <8}({DIST_HWM} > XX)"
         return rpr

@@ -36,7 +36,7 @@ def enc_ps(*, shutdown, barrier, infd, outfd):
                     flags=zmq.NOBLOCK,
                     **data,
                 )
-            except zmq.error.Again:
+            except zmq.error.Again:  # type: ignore[attr-defined]
                 pass
         missing = target - time.time()
         if missing > 0:
@@ -68,7 +68,7 @@ class EncoderDevice(Device):
             frame (np.ndarray): A frame of video. Send None to stop the stream.
 
         Raises:
-            RuntimeError: Raised if encoder processes cannot compresss frame fast enough
+            RuntimeError: Raised if encoder processes cannot compress frame fast enough
         """
         try:
             if frame is None:
@@ -92,7 +92,7 @@ class EncoderDevice(Device):
                 flags=zmq.NOBLOCK,
             )
             self.idx += 1
-        except zmq.error.Again:
+        except zmq.error.Again:  # type: ignore[attr-defined]
             raise RuntimeError(
                 "Worker processes are not processing frames fast enough. Decrease resolution or increase nproc."
             )
@@ -102,5 +102,5 @@ class EncoderDevice(Device):
         rpr += f"{'PCS': <8}{self.nproc}\n"
         rpr += f"{'IN': <8}{self.infd}\n"
         rpr += f"{'OUT': <8}{self.outfd}\n"
-        rpr += f"{'HWM': <8}({ENC_HWM} > {ENC_HWM})({ENC_HWM} >"
+        rpr += f"{'HWM': <8}({ENC_HWM} > {ENC_HWM})"
         return rpr
