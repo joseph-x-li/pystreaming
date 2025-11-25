@@ -37,7 +37,7 @@ async def aioreq(context, source, track, drain, lock):
                 await drain.send_pyobj(meta, flags=zmq.SNDMORE | zmq.NOBLOCK)
                 await drain.send_pyobj(ftime, flags=zmq.SNDMORE | zmq.NOBLOCK)
                 await drain.send_pyobj(fno, flags=zmq.NOBLOCK)
-        except zmq.error.Again:  # type: ignore[attr-defined]
+        except zmq.Again:
             pass
 
 

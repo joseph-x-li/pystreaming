@@ -32,7 +32,7 @@ def dec_ps(*, shutdown, barrier, infd, outfd, fwdbuf):
                     buf=data["buf"] if fwdbuf else None,
                     flags=zmq.NOBLOCK,
                 )
-            except zmq.error.Again:  # type: ignore[attr-defined]
+            except zmq.Again:
                 pass
         missing = target - time.time()
         if missing > 0:

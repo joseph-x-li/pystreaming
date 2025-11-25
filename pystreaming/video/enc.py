@@ -36,7 +36,7 @@ def enc_ps(*, shutdown, barrier, infd, outfd):
                     flags=zmq.NOBLOCK,
                     **data,
                 )
-            except zmq.error.Again:  # type: ignore[attr-defined]
+            except zmq.Again:
                 pass
         missing = target - time.time()
         if missing > 0:
@@ -92,7 +92,7 @@ class EncoderDevice(Device):
                 flags=zmq.NOBLOCK,
             )
             self.idx += 1
-        except zmq.error.Again:  # type: ignore[attr-defined]
+        except zmq.Again:
             raise RuntimeError(
                 "Worker processes are not processing frames fast enough. Decrease resolution or increase nproc."
             )

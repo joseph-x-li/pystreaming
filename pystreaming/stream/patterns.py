@@ -170,7 +170,7 @@ class Worker:
                 flags=zmq.NOBLOCK,
                 **data,
             )
-        except zmq.error.Again:  # type: ignore[attr-defined]
+        except zmq.Again:
             pass  # ignore send misses
 
 

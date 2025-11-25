@@ -25,7 +25,7 @@ def collect_ps(*, shutdown, barrier, infd, outfd):
                     flags=zmq.NOBLOCK,
                     **data,
                 )
-            except zmq.error.Again:  # type: ignore[attr-defined]
+            except zmq.Again:
                 pass
         missing = target - time.time()
         if missing > 0:

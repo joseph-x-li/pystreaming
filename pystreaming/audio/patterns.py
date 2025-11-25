@@ -34,7 +34,7 @@ class AudioStreamer:
                 arr=arr,
                 flags=zmq.NOBLOCK,
             )
-        except zmq.error.Again:  # type: ignore[attr-defined]
+        except zmq.Again:
             pass
         self.fno += 1
 
