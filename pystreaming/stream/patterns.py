@@ -13,7 +13,12 @@ from ..video.enc import EncoderDevice
 from ..video.pub import PublisherDevice
 from ..video.req import RequesterDevice
 from ..video.sub import SubscriberDevice
-from . import WORKER_HWM
+from . import (
+    DEGREES_IN_CIRCLE,
+    TESTCARD_ANGLE_STEP,
+    TESTCARD_FPS,
+    WORKER_HWM,
+)
 
 
 class Streamer:
@@ -103,15 +108,15 @@ class Streamer:
         testimage = loadimage(card)
         if animated:
             storage = []
-            for ang in range(0, 360, 3):
+            for ang in range(0, DEGREES_IN_CIRCLE, TESTCARD_ANGLE_STEP):
                 storage.append(cv2.cvtColor(np.asarray(testimage.rotate(ang)), cv2.COLOR_RGB2BGR))
         else:
             storage: np.ndarray = np.asarray(testimage)
         for i in count():
             print(i)
-            frame = storage[i % 360] if animated else storage
+            frame = storage[i % DEGREES_IN_CIRCLE] if animated else storage
             self.send(frame if isinstance(frame, np.ndarray) else np.asarray(frame))
-            time.sleep(1 / 30)
+            time.sleep(1 / TESTCARD_FPS)
 
 
 class Worker:
@@ -166,6 +171,12 @@ class Worker:
         return self.decoder.handler
 
     def send(self, data):
+        """Send processed data to the drain endpoint.
+
+        Args:
+            data (dict): Data dictionary with keys {buf, meta, ftime, fno}.
+                The 'arr' key will be removed before sending.
+        """
         if self.drain is None:
             return  # Device has been stopped
         del data["arr"]

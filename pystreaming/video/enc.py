@@ -7,7 +7,14 @@ import zmq
 from turbojpeg import TJFLAG_FASTDCT, TJSAMP_420, TurboJPEG
 
 from ..stream import interface as intf
-from . import ENC_HWM, ENC_TIMESTEP, QUALITY, STOPSTREAM
+from . import (
+    ENC_HWM,
+    ENC_TIMESTEP,
+    QUALITY,
+    STOPSTREAM,
+    STOPSTREAM_DUMMY_FRAME_SIZE,
+    STOPSTREAM_SLEEP_SECONDS,
+)
 from .device import Device
 
 
@@ -94,10 +101,10 @@ class EncoderDevice(Device):
                     fno=STOPSTREAM,
                     ftime=time.time(),
                     meta=None,
-                    arr=np.zeros((10, 10, 3)),
+                    arr=np.zeros((STOPSTREAM_DUMMY_FRAME_SIZE, STOPSTREAM_DUMMY_FRAME_SIZE, 3)),
                     flags=zmq.NOBLOCK,
                 )
-                time.sleep(1)
+                time.sleep(STOPSTREAM_SLEEP_SECONDS)
                 self.stop()
                 return
             intf.send(

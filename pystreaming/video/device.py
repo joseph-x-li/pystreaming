@@ -2,6 +2,12 @@ import multiprocessing as mp
 from collections.abc import Callable
 from typing import Any
 
+# Process management constants
+BARRIER_TIMEOUT_SECONDS = 3
+PROCESS_JOIN_TIMEOUT_SHORT = 1  # seconds
+PROCESS_JOIN_TIMEOUT_LONG = 5  # seconds
+PROCESS_TERMINATE_JOIN_TIMEOUT = 1  # seconds
+
 
 class Device:
     def __init__(
@@ -21,7 +27,7 @@ class Device:
         assert isinstance(dkwargs, dict)  # we only pass in arguments as kwargs
         assert nproc > 0
         self.dfunc, self.dkwargs, self.nproc = dfunc, dkwargs, nproc
-        self.barrier = mp.Barrier(nproc + 1, timeout=3)
+        self.barrier = mp.Barrier(nproc + 1, timeout=BARRIER_TIMEOUT_SECONDS)
         self.shutdown = mp.Event()
         dkwargs["barrier"] = self.barrier
         dkwargs["shutdown"] = self.shutdown
@@ -42,7 +48,7 @@ class Device:
             # Clean up processes if barrier times out
             self.shutdown.set()
             for ps in self.processes:
-                ps.join(timeout=1)
+                ps.join(timeout=PROCESS_JOIN_TIMEOUT_SHORT)
             self.processes = []
             self.shutdown.clear()
             raise RuntimeError(
@@ -56,11 +62,11 @@ class Device:
             return
         self.shutdown.set()
         for ps in self.processes:
-            ps.join(timeout=5)
+            ps.join(timeout=PROCESS_JOIN_TIMEOUT_LONG)
             if ps.is_alive():
                 # Process didn't terminate gracefully, force terminate
                 ps.terminate()
-                ps.join(timeout=1)
+                ps.join(timeout=PROCESS_TERMINATE_JOIN_TIMEOUT)
                 if ps.is_alive():
                     # Still alive, kill it
                     ps.kill()

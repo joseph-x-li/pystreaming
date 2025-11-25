@@ -5,6 +5,17 @@ from typing import Any
 
 import numpy as np
 
+from . import (
+    BUFFER_HANDLER_MISS_SLEEP,
+    DISPFPS_DEFAULT_N,
+    DISPLAY_WAITKEY_TIMEOUT,
+    ESC_KEY_CODE,
+    FPS_TEXT_COLOR,
+    FPS_TEXT_FONT_SCALE,
+    FPS_TEXT_LINE_THICKNESS,
+    FPS_TEXT_POSITION,
+)
+
 
 def buffer(
     bufferlen: float,
@@ -34,7 +45,7 @@ def buffer(
 
             if data is None:
                 # handler miss
-                time.sleep(0.001)
+                time.sleep(BUFFER_HANDLER_MISS_SLEEP)
             else:
                 # handler hit
                 ftime = data["ftime"]
@@ -72,13 +83,13 @@ def display(frame: np.ndarray, BGR: bool = True) -> None:
     if not BGR:
         frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
     cv2.imshow("pystreaming-display", frame)
-    if cv2.waitKey(1) & 0xFF == 27:  # esc pressed
+    if cv2.waitKey(DISPLAY_WAITKEY_TIMEOUT) & 0xFF == ESC_KEY_CODE:  # esc pressed
         raise KeyboardInterrupt("StopStream")
 
 
 def dispfps(
     handler: Generator[dict[str, Any], None, None],
-    n: int = 100,
+    n: int = DISPFPS_DEFAULT_N,
     write: bool = False,
 ) -> Generator[dict[str, Any], None, None]:
     """Average iterations per second over last n iterations.
@@ -104,11 +115,11 @@ def dispfps(
                 data["arr"] = cv2.putText(
                     data["arr"],
                     f"FPS: {(n / diff):.3f}",
-                    (50, 50),
+                    FPS_TEXT_POSITION,
                     cv2.FONT_HERSHEY_SIMPLEX,
-                    1,
-                    (0, 255, 0),
-                    2,
+                    FPS_TEXT_FONT_SCALE,
+                    FPS_TEXT_COLOR,
+                    FPS_TEXT_LINE_THICKNESS,
                     cv2.LINE_4,
                 )
             else:

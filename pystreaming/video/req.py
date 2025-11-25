@@ -4,7 +4,14 @@ import contextlib
 import zmq
 import zmq.asyncio
 
-from . import FRAMEMISS, REQ_HWM, REQ_TIMESTEP, STOPSTREAM, TRACKMISS
+from . import (
+    ASYNC_STOP_SLEEP_SECONDS,
+    FRAMEMISS,
+    REQ_HWM,
+    REQ_TIMESTEP,
+    STOPSTREAM,
+    TRACKMISS,
+)
 from .device import Device
 
 """Stop on STOPSTREAM, or TRACKMISS
@@ -41,7 +48,7 @@ async def aioreq(context, source, track, drain, lock):
 
 async def stop(shutdown):
     while True:
-        await asyncio.sleep(0.1)
+        await asyncio.sleep(ASYNC_STOP_SLEEP_SECONDS)
         if shutdown.is_set():
             raise StopAsyncIteration()
 
