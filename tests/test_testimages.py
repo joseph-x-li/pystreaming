@@ -16,6 +16,6 @@ def test_test_images():
 
     try:
         ps.loadimage(-1212)
-        assert False
+        raise AssertionError("Expected IndexError for invalid enum")
     except IndexError:
         pass

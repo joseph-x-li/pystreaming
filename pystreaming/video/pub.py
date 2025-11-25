@@ -1,8 +1,10 @@
-import zmq
+import contextlib
 import time
 
+import zmq
+
 from ..stream import interface as intf
-from . import PUB_TIMESTEP, PUB_HWM
+from . import PUB_HWM, PUB_TIMESTEP
 from .device import Device
 
 
@@ -15,21 +17,26 @@ def pullpub_ps(*, shutdown, barrier, infd, outfd):
     out.setsockopt(zmq.SNDHWM, PUB_HWM)
     out.bind(outfd)
     barrier.wait()
-    while not shutdown.is_set():
-        target = time.time() + PUB_TIMESTEP
-        if socket.poll(0):
-            data = intf.recv(socket=socket, buf=True, flags=zmq.NOBLOCK)
-            try:
-                intf.send(
-                    socket=out,
-                    flags=zmq.NOBLOCK,
-                    **data,
-                )
-            except zmq.Again:
-                pass
-        missing = target - time.time()
-        if missing > 0:
-            time.sleep(missing)  # loop takes at minimum TIMESTEP seconds
+    try:
+        while not shutdown.is_set():
+            target = time.time() + PUB_TIMESTEP
+            if socket.poll(0):
+                data = intf.recv(socket=socket, buf=True, flags=zmq.NOBLOCK)
+                with contextlib.suppress(zmq.Again):
+                    intf.send(
+                        socket=out,
+                        flags=zmq.NOBLOCK,
+                        **data,
+                    )
+            missing = target - time.time()
+            if missing > 0:
+                time.sleep(missing)  # loop takes at minimum TIMESTEP seconds
+    finally:
+        # Clean up sockets and context
+        with contextlib.suppress(Exception):
+            socket.close(linger=0)
+            out.close(linger=0)
+            context.term()
 
 
 class PublisherDevice(Device):

@@ -1,7 +1,10 @@
-import zmq
+import contextlib
 import time
+
+import zmq
+
 from ..stream import interface as intf
-from . import STR_HWM, RCV_HWM
+from . import RCV_HWM, STR_HWM
 
 
 class AudioStreamer:
@@ -13,11 +16,18 @@ class AudioStreamer:
         Args:
             endpoint (str): Descriptor of stream publishing endpoint.
         """
-        self.socket = zmq.Context.instance().socket(zmq.PUB)
+        self.socket: zmq.Socket | None = zmq.Context.instance().socket(zmq.PUB)
         self.socket.bind(endpoint)
         self.socket.setsockopt(zmq.SNDHWM, STR_HWM)
         self.endpoint = endpoint
         self.fno = 0
+
+    def close(self) -> None:
+        """Close the audio streamer and clean up resources."""
+        if hasattr(self, "socket") and self.socket:
+            with contextlib.suppress(Exception):
+                self.socket.close(linger=0)
+            self.socket = None
 
     def send(self, arr):
         """Send a buffer of audio.
@@ -25,7 +35,9 @@ class AudioStreamer:
         Args:
             arr (np.ndarray): A segment of audio as a numpy array.
         """
-        try:
+        if self.socket is None:
+            return  # Device has been closed
+        with contextlib.suppress(zmq.Again):
             intf.send(
                 socket=self.socket,
                 fno=self.fno,
@@ -34,8 +46,6 @@ class AudioStreamer:
                 arr=arr,
                 flags=zmq.NOBLOCK,
             )
-        except zmq.Again:
-            pass
         self.fno += 1
 
     def __repr__(self):
@@ -54,11 +64,18 @@ class AudioReceiver:
         Args:
             endpoint (str): Descriptor of stream publishing endpoint.
         """
-        self.socket = zmq.Context.instance().socket(zmq.SUB)
+        self.socket: zmq.Socket | None = zmq.Context.instance().socket(zmq.SUB)
         self.socket.setsockopt(zmq.RCVHWM, RCV_HWM)
         self.socket.connect(endpoint)
         self.socket.subscribe("")
         self.endpoint = endpoint
+
+    def close(self) -> None:
+        """Close the audio receiver and clean up resources."""
+        if hasattr(self, "socket") and self.socket:
+            with contextlib.suppress(Exception):
+                self.socket.close(linger=0)
+            self.socket = None
 
     def recv(self, timeout):
         """Receive a package of data from the audio channel.
@@ -69,6 +86,8 @@ class AudioReceiver:
         Raises:
             TimeoutError: Raised when no messages are received in the timeout period.
         """
+        if self.socket is None:
+            raise RuntimeError("Audio receiver has been closed")
         if self.socket.poll(timeout):
             return intf.recv(
                 socket=self.socket,
@@ -76,9 +95,7 @@ class AudioReceiver:
                 flags=zmq.NOBLOCK,
             )
         else:
-            raise TimeoutError(
-                f"No messages were received within the timeout period {timeout}ms"
-            )
+            raise TimeoutError(f"No messages were received within the timeout period {timeout}ms")
 
     def handler(self, timeout=0):
         """Yield a package of data from audio channel.

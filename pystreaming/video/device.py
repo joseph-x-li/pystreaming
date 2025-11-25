@@ -1,12 +1,13 @@
 import multiprocessing as mp
-from typing import Any, Callable, Dict, List
+from collections.abc import Callable
+from typing import Any
 
 
 class Device:
     def __init__(
         self,
         dfunc: Callable[..., None],
-        dkwargs: Dict[str, Any],
+        dkwargs: dict[str, Any],
         nproc: int,
     ) -> None:
         """Background running device.
@@ -24,7 +25,7 @@ class Device:
         self.shutdown = mp.Event()
         dkwargs["barrier"] = self.barrier
         dkwargs["shutdown"] = self.shutdown
-        self.processes: List[mp.Process] = []
+        self.processes: list[mp.Process] = []
 
     def start(self) -> None:
         """Start background processes. Does nothing if already started."""
@@ -47,7 +48,7 @@ class Device:
             raise RuntimeError(
                 "Failed to start device processes: barrier timeout. "
                 "Processes may have failed to initialize."
-            )
+            ) from None
 
     def stop(self) -> None:
         """Stop background processes. Does nothing if already stopped."""

@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from typing import Any, Tuple
+from typing import Any
 
 
 class CircularOrderedDict:
@@ -18,7 +18,7 @@ class CircularOrderedDict:
         self.dict: OrderedDict[Any, Any] = OrderedDict()
         self.maxsize = maxsize
 
-    def pop_front(self) -> Tuple[Any, Any]:
+    def pop_front(self) -> tuple[Any, Any]:
         """Pop key, value pair from front of dictionary.
 
         Returns:

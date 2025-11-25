@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 import zmq
@@ -10,8 +10,8 @@ def send(
     fno: int,
     ftime: float,
     meta: Any,
-    arr: Optional[np.ndarray] = None,
-    buf: Optional[bytes] = None,
+    arr: np.ndarray | None = None,
+    buf: bytes | None = None,
     flags: int = 0,
 ) -> None:
     """Internal video data send command.

@@ -1,14 +1,15 @@
 import time
 from collections import OrderedDict, deque
-from typing import Any, Callable, Dict, Generator, Tuple
+from collections.abc import Callable, Generator
+from typing import Any
 
 import numpy as np
 
 
 def buffer(
     bufferlen: float,
-    handlers: Dict[str, Callable[[], Generator[Dict[str, Any] | None, None, None]]],
-) -> Generator[Tuple[str, Dict[str, Any]], None, None]:
+    handlers: dict[str, Callable[[], Generator[dict[str, Any] | None, None, None]]],
+) -> Generator[tuple[str, dict[str, Any]], None, None]:
     """Buffer and reorder incoming packets of data.
 
     Args:
@@ -21,7 +22,7 @@ def buffer(
     """
     assert isinstance(handlers, dict)
     # Prime the generators by calling them
-    primed_handlers: Dict[str, Generator[Dict[str, Any] | None, None, None]] = {
+    primed_handlers: dict[str, Generator[dict[str, Any] | None, None, None]] = {
         k: handlers[k]() for k in handlers
     }
     buffers = {k: OrderedDict() for k in primed_handlers}
@@ -76,10 +77,10 @@ def display(frame: np.ndarray, BGR: bool = True) -> None:
 
 
 def dispfps(
-    handler: Generator[Dict[str, Any], None, None],
+    handler: Generator[dict[str, Any], None, None],
     n: int = 100,
     write: bool = False,
-) -> Generator[Dict[str, Any], None, None]:
+) -> Generator[dict[str, Any], None, None]:
     """Average iterations per second over last n iterations.
 
     Args:

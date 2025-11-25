@@ -1,5 +1,5 @@
-import zmq
 import time
+
 import pystreaming as ps
 
 
@@ -24,6 +24,7 @@ def test_start_stop():
     ]
     for dev in devices:
         stopandgo(dev)
+
 
 def test_patterns():
     patterns = [

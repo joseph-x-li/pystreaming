@@ -1,11 +1,11 @@
-from pystreaming.listlib.circularlist import CircularList, Empty
 from pystreaming.listlib.circulardict import CircularOrderedDict
+from pystreaming.listlib.circularlist import CircularList, Empty
 
 
 def test_circular_list():
     try:
         cl = CircularList(0)
-        assert False
+        raise AssertionError("Expected ValueError for size 0")
     except ValueError:
         pass
 
@@ -53,14 +53,14 @@ def test_circular_list():
     assert cl[0] == 5
     try:
         print(cl[2])
-        assert False
+        raise AssertionError("Expected IndexError for index out of range")
     except IndexError:
         pass
 
     cl[1] = 7
     try:
         cl[2] = 8
-        assert False
+        raise AssertionError("Expected IndexError for index out of range")
     except IndexError:
         pass
 
@@ -68,7 +68,7 @@ def test_circular_list():
     assert cl.pop() == 7
     try:
         cl.pop()
-        assert False
+        raise AssertionError("Expected Empty exception when popping from empty list")
     except Empty:
         pass
 
@@ -76,7 +76,7 @@ def test_circular_list():
 def test_circular_dict():
     try:
         cd = CircularOrderedDict(0)
-        assert False
+        raise AssertionError("Expected ValueError for size 0")
     except ValueError:
         pass
 
@@ -91,7 +91,7 @@ def test_circular_dict():
     cd.insert_end(6, 6)
     assert len(cd) == 5
 
-    for k, i in zip(cd.keys(), range(2, 7)):
+    for k, i in zip(cd.keys(), range(2, 7), strict=True):
         assert k == i
 
     cd.insert_end(3, 100)
@@ -100,7 +100,7 @@ def test_circular_dict():
 
     try:
         cd[7] = 7
-        assert False
+        raise AssertionError("Expected KeyError for key not in dict")
     except KeyError:
         pass
 

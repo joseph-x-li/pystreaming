@@ -1,11 +1,13 @@
+import contextlib
 import time
-import zmq
-import numpy as np
 from functools import partial
-from turbojpeg import TurboJPEG, TJSAMP_420, TJFLAG_FASTDCT
+
+import numpy as np
+import zmq
+from turbojpeg import TJFLAG_FASTDCT, TJSAMP_420, TurboJPEG
 
 from ..stream import interface as intf
-from . import QUALITY, STOPSTREAM, ENC_TIMESTEP, ENC_HWM
+from . import ENC_HWM, ENC_TIMESTEP, QUALITY, STOPSTREAM
 from .device import Device
 
 
@@ -24,23 +26,28 @@ def enc_ps(*, shutdown, barrier, infd, outfd):
         jpeg_subsample=TJSAMP_420,
         flags=TJFLAG_FASTDCT,
     )
-    while not shutdown.is_set():
-        target = time.time() + ENC_TIMESTEP
-        if socket.poll(0):
-            data = intf.recv(socket=socket, arr=True, flags=zmq.NOBLOCK)
-            data["buf"] = encoder(data["arr"])
-            del data["arr"]
-            try:
-                intf.send(
-                    socket=out,
-                    flags=zmq.NOBLOCK,
-                    **data,
-                )
-            except zmq.Again:
-                pass
-        missing = target - time.time()
-        if missing > 0:
-            time.sleep(missing)
+    try:
+        while not shutdown.is_set():
+            target = time.time() + ENC_TIMESTEP
+            if socket.poll(0):
+                data = intf.recv(socket=socket, arr=True, flags=zmq.NOBLOCK)
+                data["buf"] = encoder(data["arr"])
+                del data["arr"]
+                with contextlib.suppress(zmq.Again):
+                    intf.send(
+                        socket=out,
+                        flags=zmq.NOBLOCK,
+                        **data,
+                    )
+            missing = target - time.time()
+            if missing > 0:
+                time.sleep(missing)
+    finally:
+        # Clean up sockets and context
+        with contextlib.suppress(Exception):
+            socket.close(linger=0)
+            out.close(linger=0)
+            context.term()
 
 
 class EncoderDevice(Device):
@@ -61,6 +68,14 @@ class EncoderDevice(Device):
         self.sender.setsockopt(zmq.SNDHWM, ENC_HWM)
         self.sender.bind(self.infd)
 
+    def stop(self) -> None:
+        """Stop the encoder device and clean up resources."""
+        if hasattr(self, "sender") and self.sender:
+            with contextlib.suppress(Exception):
+                self.sender.close(linger=0)
+            self.sender = None
+        super().stop()
+
     def send(self, frame):
         """Send a frame to the encoder bank.
 
@@ -70,6 +85,8 @@ class EncoderDevice(Device):
         Raises:
             RuntimeError: Raised if encoder processes cannot compress frame fast enough
         """
+        if self.sender is None:
+            raise RuntimeError("Encoder device has been stopped")
         try:
             if frame is None:
                 intf.send(
@@ -92,10 +109,10 @@ class EncoderDevice(Device):
                 flags=zmq.NOBLOCK,
             )
             self.idx += 1
-        except zmq.Again:
+        except zmq.Again as e:
             raise RuntimeError(
                 "Worker processes are not processing frames fast enough. Decrease resolution or increase nproc."
-            )
+            ) from e
 
     def __repr__(self):
         rpr = "-----EncoderDevice-----\n"

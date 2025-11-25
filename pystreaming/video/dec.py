@@ -1,10 +1,12 @@
+import contextlib
 import time
-import zmq
 from functools import partial
-from turbojpeg import TurboJPEG, TJFLAG_FASTDCT, TJFLAG_FASTUPSAMPLE
+
+import zmq
+from turbojpeg import TJFLAG_FASTDCT, TJFLAG_FASTUPSAMPLE, TurboJPEG
 
 from ..stream import interface as intf
-from . import DEC_TIMESTEP, DEC_HWM
+from . import DEC_HWM, DEC_TIMESTEP
 from .device import Device
 
 
@@ -18,25 +20,30 @@ def dec_ps(*, shutdown, barrier, infd, outfd, fwdbuf):
     out.connect(outfd)
     barrier.wait()
     decoder = partial(TurboJPEG().decode, flags=(TJFLAG_FASTDCT + TJFLAG_FASTUPSAMPLE))
-    while not shutdown.is_set():
-        target = time.time() + DEC_TIMESTEP
-        if socket.poll(0):
-            data = intf.recv(socket=socket, buf=True, flags=zmq.NOBLOCK)
-            try:
-                intf.send(
-                    socket=out,
-                    fno=data["fno"],
-                    ftime=data["ftime"],
-                    meta=data["meta"],
-                    arr=decoder(data["buf"]),
-                    buf=data["buf"] if fwdbuf else None,
-                    flags=zmq.NOBLOCK,
-                )
-            except zmq.Again:
-                pass
-        missing = target - time.time()
-        if missing > 0:
-            time.sleep(missing)
+    try:
+        while not shutdown.is_set():
+            target = time.time() + DEC_TIMESTEP
+            if socket.poll(0):
+                data = intf.recv(socket=socket, buf=True, flags=zmq.NOBLOCK)
+                with contextlib.suppress(zmq.Again):
+                    intf.send(
+                        socket=out,
+                        fno=data["fno"],
+                        ftime=data["ftime"],
+                        meta=data["meta"],
+                        arr=decoder(data["buf"]),
+                        buf=data["buf"] if fwdbuf else None,
+                        flags=zmq.NOBLOCK,
+                    )
+            missing = target - time.time()
+            if missing > 0:
+                time.sleep(missing)
+    finally:
+        # Clean up sockets and context
+        with contextlib.suppress(Exception):
+            socket.close(linger=0)
+            out.close(linger=0)
+            context.term()
 
 
 class DecoderDevice(Device):
@@ -53,9 +60,17 @@ class DecoderDevice(Device):
         self.context, self.nproc, self.fwdbuf = zmq.Context.instance(), nproc, fwdbuf
         dkwargs = {"infd": self.infd, "outfd": self.outfd, "fwdbuf": self.fwdbuf}
         super().__init__(dec_ps, dkwargs, nproc)
-        self.receiver = self.context.socket(zmq.PULL)
+        self.receiver: zmq.Socket | None = self.context.socket(zmq.PULL)
         self.receiver.setsockopt(zmq.RCVHWM, DEC_HWM)
         self.receiver.bind(self.outfd)
+
+    def stop(self) -> None:
+        """Stop the decoder device and clean up resources."""
+        if hasattr(self, "receiver") and self.receiver:
+            with contextlib.suppress(Exception):
+                self.receiver.close(linger=0)
+            self.receiver = None
+        super().stop()
 
     def recv(self, timeout=60_000):
         """Receive a package of data from the decoder pool.
@@ -70,6 +85,8 @@ class DecoderDevice(Device):
         Returns:
             list: [arr, buf, meta, ftime, fno].
         """
+        if self.receiver is None:
+            raise RuntimeError("Decoder device has been stopped")
         self.start()
         if self.receiver.poll(timeout):
             return intf.recv(
@@ -79,9 +96,7 @@ class DecoderDevice(Device):
                 flags=zmq.NOBLOCK,
             )
         else:
-            raise TimeoutError(
-                f"No messages were received within the timeout period {timeout}ms"
-            )
+            raise TimeoutError(f"No messages were received within the timeout period {timeout}ms")
 
     def handler(self, timeout):
         """Yield a package of data from the decoder pool.

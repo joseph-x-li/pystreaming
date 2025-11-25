@@ -1,19 +1,18 @@
-from typing import Any, Generator, List, Optional
+import contextlib
+import uuid
+from typing import Any
 
 import numpy as np
 import zmq
-import uuid
 
-from pystreaming import (
-    EncoderDevice,
-    DistributorDevice,
-    DecoderDevice,
-    RequesterDevice,
-    PublisherDevice,
-    SubscriberDevice,
-    CollectDevice,
-)
 from ..stream import interface as intf
+from ..video.collect import CollectDevice
+from ..video.dec import DecoderDevice
+from ..video.dist import DistributorDevice
+from ..video.enc import EncoderDevice
+from ..video.pub import PublisherDevice
+from ..video.req import RequesterDevice
+from ..video.sub import SubscriberDevice
 from . import WORKER_HWM
 
 
@@ -21,7 +20,7 @@ class Streamer:
     def __init__(
         self,
         endpoint: str,
-        tracks: Optional[List[str]] = None,
+        tracks: list[str] | None = None,
         nproc: int = 2,
         mapreduce: bool = False,
     ) -> None:
@@ -72,9 +71,9 @@ class Streamer:
 
     def __exit__(
         self,
-        exception_type: Optional[type[BaseException]],
-        exception_value: Optional[BaseException],
-        traceback: Optional[Any],
+        exception_type: type[BaseException] | None,
+        exception_value: BaseException | None,
+        traceback: Any | None,
     ) -> None:
         self.stop()
 
@@ -92,10 +91,12 @@ class Streamer:
                 pystreaming.IMAG_L
             animated (bool, optional): Set True to make image rotate. Defaults to False.
         """
+        import time
+        from itertools import count
+
         import cv2  # type: ignore[import-untyped]
         import numpy as np
-        from itertools import count
-        import time
+
         from pystreaming import loadimage
 
         self.start()
@@ -103,9 +104,7 @@ class Streamer:
         if animated:
             storage = []
             for ang in range(0, 360, 3):
-                storage.append(
-                    cv2.cvtColor(np.asarray(testimage.rotate(ang)), cv2.COLOR_RGB2BGR)
-                )
+                storage.append(cv2.cvtColor(np.asarray(testimage.rotate(ang)), cv2.COLOR_RGB2BGR))
         else:
             storage: np.ndarray = np.asarray(testimage)
         for i in count():
@@ -130,7 +129,7 @@ class Worker:
         self.requester = RequesterDevice(source, track, reqthread, seed)
         self.decoder = DecoderDevice(decproc, seed, fwdbuf=True)
 
-        self.drain = zmq.Context.instance().socket(zmq.PUSH)
+        self.drain: zmq.Socket | None = zmq.Context.instance().socket(zmq.PUSH)
         self.drain.setsockopt(zmq.SNDHWM, WORKER_HWM)
         self.drain.connect(drain)
 
@@ -140,8 +139,12 @@ class Worker:
         self.decoder.start()
         self.started = True
 
-    def stop(self):
+    def stop(self) -> None:
         """Cleanup and stop internal pystreaming objects."""
+        if hasattr(self, "drain") and self.drain:
+            with contextlib.suppress(Exception):
+                self.drain.close(linger=0)
+            self.drain = None
         self.requester.stop()
         self.decoder.stop()
         self.started = False
@@ -163,15 +166,15 @@ class Worker:
         return self.decoder.handler
 
     def send(self, data):
+        if self.drain is None:
+            return  # Device has been stopped
         del data["arr"]
-        try:
+        with contextlib.suppress(zmq.Again):
             intf.send(
                 socket=self.drain,
                 flags=zmq.NOBLOCK,
                 **data,
             )
-        except zmq.Again:
-            pass  # ignore send misses
 
 
 class Receiver:

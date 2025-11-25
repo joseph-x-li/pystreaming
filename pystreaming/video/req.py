@@ -1,11 +1,11 @@
+import asyncio
+import contextlib
+
 import zmq
 import zmq.asyncio
-import asyncio
 
-from . import STOPSTREAM, FRAMEMISS, TRACKMISS
-from . import REQ_HWM, REQ_TIMESTEP
+from . import FRAMEMISS, REQ_HWM, REQ_TIMESTEP, STOPSTREAM, TRACKMISS
 from .device import Device
-
 
 """Stop on STOPSTREAM, or TRACKMISS
 Continue on FRAMEMISS
@@ -31,14 +31,12 @@ async def aioreq(context, source, track, drain, lock):
             continue  # throw away if no frame available
         if fno == TRACKMISS:
             raise StopAsyncIteration(f'Track "{track}" was not recognized. Exiting.')
-        try:
+        with contextlib.suppress(zmq.Again):
             async with lock:
                 await drain.send(buf, copy=False, flags=zmq.SNDMORE | zmq.NOBLOCK)
                 await drain.send_pyobj(meta, flags=zmq.SNDMORE | zmq.NOBLOCK)
                 await drain.send_pyobj(ftime, flags=zmq.SNDMORE | zmq.NOBLOCK)
                 await drain.send_pyobj(fno, flags=zmq.NOBLOCK)
-        except zmq.Again:
-            pass
 
 
 async def stop(shutdown):
@@ -61,9 +59,13 @@ def aiomain(*, shutdown, barrier, source, outfd, track, nthread):
     try:
         loop.run_until_complete(asyncio.gather(*args))
     except StopAsyncIteration:
-        loop.stop()
-        context.destroy(linger=0)
-        loop.close()
+        pass
+    finally:
+        # Clean up async context and loop
+        with contextlib.suppress(Exception):
+            loop.stop()
+            context.destroy(linger=0)
+            loop.close()
 
 
 class RequesterDevice(Device):

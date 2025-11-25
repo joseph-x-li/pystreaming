@@ -1,10 +1,12 @@
-import zmq
+import contextlib
 import time
 
-from ..stream import interface as intf
-from . import TRACKMISS, FRAMEMISS, DIST_TIMESTEP, DIST_HWM
-from .device import Device
+import zmq
+
 from ..listlib.circularlist import CircularList, Empty
+from ..stream import interface as intf
+from . import DIST_HWM, DIST_TIMESTEP, FRAMEMISS, TRACKMISS
+from .device import Device
 
 
 def dist_ps(*, shutdown, barrier, infd, endpoint, tracks):
@@ -16,35 +18,42 @@ def dist_ps(*, shutdown, barrier, infd, endpoint, tracks):
     distributor.bind(endpoint)
     barrier.wait()
     queues = {track: CircularList() for track in tracks}
-    while not shutdown.is_set():
-        target = time.time() + DIST_TIMESTEP
-        if collector.poll(0):  # returns 0 if no event, something else if there is
-            data = intf.recv(socket=collector, buf=True, flags=zmq.NOBLOCK)
-            for fqueue in queues.values():  # add to every buf queue
-                fqueue.push(data)
-        if distributor.poll(0):  # got frame req
-            track = distributor.recv().decode()
-            data = {}
-            try:
-                data = queues[track].pop()
-            except Empty:  # Regular frame miss
-                data["fno"] = FRAMEMISS
-                data["ftime"] = None
-                data["meta"] = None
-                data["buf"] = b"nil"
-            except KeyError:  # Track miss
-                data["fno"] = TRACKMISS
-                data["ftime"] = None
-                data["meta"] = None
-                data["buf"] = b"nil"
-            intf.send(
-                socket=distributor,
-                flags=zmq.NOBLOCK,
-                **data,
-            )
-        missing = target - time.time()
-        if missing > 0:
-            time.sleep(missing)
+    try:
+        while not shutdown.is_set():
+            target = time.time() + DIST_TIMESTEP
+            if collector.poll(0):  # returns 0 if no event, something else if there is
+                data = intf.recv(socket=collector, buf=True, flags=zmq.NOBLOCK)
+                for fqueue in queues.values():  # add to every buf queue
+                    fqueue.push(data)
+            if distributor.poll(0):  # got frame req
+                track = distributor.recv().decode()
+                data = {}
+                try:
+                    data = queues[track].pop()
+                except Empty:  # Regular frame miss
+                    data["fno"] = FRAMEMISS
+                    data["ftime"] = None
+                    data["meta"] = None
+                    data["buf"] = b"nil"
+                except KeyError:  # Track miss
+                    data["fno"] = TRACKMISS
+                    data["ftime"] = None
+                    data["meta"] = None
+                    data["buf"] = b"nil"
+                intf.send(
+                    socket=distributor,
+                    flags=zmq.NOBLOCK,
+                    **data,
+                )
+            missing = target - time.time()
+            if missing > 0:
+                time.sleep(missing)
+    finally:
+        # Clean up sockets and context
+        with contextlib.suppress(Exception):
+            collector.close(linger=0)
+            distributor.close(linger=0)
+            context.term()
 
 
 class DistributorDevice(Device):
