@@ -102,10 +102,13 @@ def recv(
     if arr:
         md = cast(ArrayMetadata, socket.recv_json(flags=flags))
         msg = socket.recv(copy=False, flags=flags)
-        arrbuf = memoryview(bytes(msg))
+        # zmq.Frame has .bytes property that returns bytes
+        arrbuf = memoryview(msg.bytes)
         arr_data = np.frombuffer(arrbuf, dtype=md["dtype"]).reshape(md["shape"])
     if buf:
-        buf_data = bytes(socket.recv(copy=False, flags=flags))
+        msg = socket.recv(copy=False, flags=flags)
+        # zmq.Frame has .bytes property that returns bytes
+        buf_data = msg.bytes
 
     meta = socket.recv_pyobj(flags=flags)
     ftime = cast(float, socket.recv_pyobj(flags=flags))
