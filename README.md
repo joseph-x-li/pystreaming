@@ -1,4 +1,4 @@
-<p align="center"><a href="#"><img width=100% alt="" src="https://github.com/joseph-x-li/pystreaming/blob/main/resources/logo.png?raw=true"></a></p>
+<p align="center"><a href="#"><img width=100% alt="" src="https://github.com/joseph-x-li/pystreaming/blob/main/resources/logo_no_transparency.png?raw=true"></a></p>
 
 # pystreaming
 
