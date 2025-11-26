@@ -40,15 +40,15 @@ def enc_ps(*, shutdown, barrier, infd, outfd):
                 data = intf.recv(socket=socket, arr=True, flags=zmq.NOBLOCK)
                 if data.arr is not None:
                     buf_data = encoder(data.arr)
-                    with contextlib.suppress(zmq.Again):
-                        intf.send(
-                            socket=out,
+                with contextlib.suppress(zmq.Again):
+                    intf.send(
+                        socket=out,
                             fno=data.fno,
                             ftime=data.ftime,
                             meta=data.meta,
                             buf=buf_data,
-                            flags=zmq.NOBLOCK,
-                        )
+                        flags=zmq.NOBLOCK,
+                    )
             missing = target - time.time()
             if missing > 0:
                 time.sleep(missing)

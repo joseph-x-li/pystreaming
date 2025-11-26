@@ -1,6 +1,5 @@
 import contextlib
 import uuid
-from collections.abc import Generator
 from typing import Any
 
 import numpy as np

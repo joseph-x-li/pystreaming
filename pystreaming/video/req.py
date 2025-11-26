@@ -1,7 +1,6 @@
 import asyncio
 import contextlib
 from multiprocessing.synchronize import Barrier, Event
-from typing import Any
 
 import zmq
 import zmq.asyncio
