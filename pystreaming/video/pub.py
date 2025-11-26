@@ -25,8 +25,11 @@ def pullpub_ps(*, shutdown, barrier, infd, outfd):
                 with contextlib.suppress(zmq.Again):
                     intf.send(
                         socket=out,
+                        fno=data.fno,
+                        ftime=data.ftime,
+                        meta=data.meta,
+                        buf=data.buf,
                         flags=zmq.NOBLOCK,
-                        **data,
                     )
             missing = target - time.time()
             if missing > 0:

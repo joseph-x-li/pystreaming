@@ -1,5 +1,7 @@
 import asyncio
 import contextlib
+from multiprocessing.synchronize import Barrier, Event
+from typing import Any
 
 import zmq
 import zmq.asyncio
@@ -21,7 +23,13 @@ Wait at most TIMEOUT for receiving a response?
 """
 
 
-async def aioreq(context, source, track, drain, lock):
+async def aioreq(
+    context: zmq.asyncio.Context,
+    source: str,
+    track: str,
+    drain: zmq.asyncio.Socket,
+    lock: asyncio.Lock,
+) -> None:
     socket = context.socket(zmq.REQ)
     socket.connect(source)
     track_bytes = bytes(track, "utf-8")
@@ -46,14 +54,22 @@ async def aioreq(context, source, track, drain, lock):
                 await drain.send_pyobj(fno, flags=zmq.NOBLOCK)
 
 
-async def stop(shutdown):
+async def stop(shutdown: Event) -> None:
     while True:
         await asyncio.sleep(ASYNC_STOP_SLEEP_SECONDS)
         if shutdown.is_set():
             raise StopAsyncIteration()
 
 
-def aiomain(*, shutdown, barrier, source, outfd, track, nthread):
+def aiomain(
+    *,
+    shutdown: Event,
+    barrier: Barrier,
+    source: str,
+    outfd: str,
+    track: str,
+    nthread: int,
+) -> None:
     context = zmq.asyncio.Context()
     drain = context.socket(zmq.PUSH)
     drain.setsockopt(zmq.SNDHWM, REQ_HWM)

@@ -38,14 +38,17 @@ def enc_ps(*, shutdown, barrier, infd, outfd):
             target = time.time() + ENC_TIMESTEP
             if socket.poll(0):
                 data = intf.recv(socket=socket, arr=True, flags=zmq.NOBLOCK)
-                data["buf"] = encoder(data["arr"])
-                del data["arr"]
-                with contextlib.suppress(zmq.Again):
-                    intf.send(
-                        socket=out,
-                        flags=zmq.NOBLOCK,
-                        **data,
-                    )
+                if data.arr is not None:
+                    buf_data = encoder(data.arr)
+                    with contextlib.suppress(zmq.Again):
+                        intf.send(
+                            socket=out,
+                            fno=data.fno,
+                            ftime=data.ftime,
+                            meta=data.meta,
+                            buf=buf_data,
+                            flags=zmq.NOBLOCK,
+                        )
             missing = target - time.time()
             if missing > 0:
                 time.sleep(missing)
@@ -83,11 +86,11 @@ class EncoderDevice(Device):
             self.sender = None
         super().stop()
 
-    def send(self, frame):
+    def send(self, frame: np.ndarray | None) -> None:
         """Send a frame to the encoder bank.
 
         Args:
-            frame (np.ndarray): A frame of video. Send None to stop the stream.
+            frame (np.ndarray | None): A frame of video. Send None to stop the stream.
 
         Raises:
             RuntimeError: Raised if encoder processes cannot compress frame fast enough

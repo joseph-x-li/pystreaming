@@ -1,4 +1,4 @@
-from typing import Any, TypeVar
+from typing import Generic, TypeVar
 
 T = TypeVar("T")
 
@@ -10,7 +10,7 @@ class Empty(Exception):
         super().__init__(f"Tried to pop from an empty {calltype}")
 
 
-class CircularList:
+class CircularList(Generic[T]):
     """Fixed size list with push-overwrite capabilities."""
 
     def __init__(self, maxsize: int = 10) -> None:
@@ -32,9 +32,9 @@ class CircularList:
         self.size = 0
 
         self.maxsize = maxsize
-        self._array: list[Any] = [None] * maxsize
+        self._array: list[T | None] = [None] * maxsize
 
-    def push(self, item: Any) -> None:
+    def push(self, item: T) -> None:
         """Push an element FIFO (queue) style.
 
         Args:
@@ -50,19 +50,20 @@ class CircularList:
             self._back = (self._back + 1) % self.maxsize
             self.size += 1
 
-    def pop(self) -> Any:
+    def pop(self) -> T:
         """Pop an element off FIFO (queue) style.
 
         Raises:
             Empty: Raised when there are no elements in the queue.
 
         Returns:
-            pyobj: The first element in the list.
+            T: The first element in the list.
         """
         if self.size == 0:
             raise Empty(self.__class__.__name__)
         else:
             ret = self._array[self._front]
+            assert ret is not None, "Internal error: popped None from non-empty list"
             self.size -= 1
             self._front = (self._front + 1) % self.maxsize
             return ret
@@ -70,7 +71,7 @@ class CircularList:
     def __len__(self) -> int:
         return self.size
 
-    def __getitem__(self, idx: int) -> Any:
+    def __getitem__(self, idx: int) -> T:
         """Gets the nth element of the list.
         Elements at the front of the list (would be popped off) are at index 0.
 
@@ -81,13 +82,15 @@ class CircularList:
             IndexError: Raise if the index is out of range.
 
         Returns:
-            pyobj: The object desired.
+            T: The object desired.
         """
         if idx >= self.size or idx < 0:
             raise IndexError(f"list index {idx} out of range: [0, {self.size})")
-        return self._array[(self._front + idx) % self.maxsize]
+        ret = self._array[(self._front + idx) % self.maxsize]
+        assert ret is not None, "Internal error: accessed None from valid index"
+        return ret
 
-    def __setitem__(self, idx: int, new_val: Any) -> None:
+    def __setitem__(self, idx: int, new_val: T) -> None:
         """Sets the nth element of the list.
         Elements at the front of the list (would be popped off) are at index 0.
 

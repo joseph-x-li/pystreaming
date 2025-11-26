@@ -1,7 +1,6 @@
 import time
 from collections import OrderedDict, deque
 from collections.abc import Callable, Generator
-from typing import Any
 
 import numpy as np
 
@@ -15,12 +14,13 @@ from . import (
     FPS_TEXT_LINE_THICKNESS,
     FPS_TEXT_POSITION,
 )
+from .interface import RecvData
 
 
 def buffer(
     bufferlen: float,
-    handlers: dict[str, Callable[[], Generator[dict[str, Any] | None, None, None]]],
-) -> Generator[tuple[str, dict[str, Any]], None, None]:
+    handlers: dict[str, Callable[[], Generator[RecvData | None, None, None]]],
+) -> Generator[tuple[str, RecvData], None, None]:
     """Buffer and reorder incoming packets of data.
 
     Args:
@@ -33,10 +33,12 @@ def buffer(
     """
     assert isinstance(handlers, dict)
     # Prime the generators by calling them
-    primed_handlers: dict[str, Generator[dict[str, Any] | None, None, None]] = {
+    primed_handlers: dict[str, Generator[RecvData | None, None, None]] = {
         k: handlers[k]() for k in handlers
     }
-    buffers = {k: OrderedDict() for k in primed_handlers}
+    buffers: dict[str, OrderedDict[float, RecvData]] = {
+        k: OrderedDict() for k in primed_handlers
+    }
     tdelta: float | None = None
     while True:
         for k, handler in primed_handlers.items():
@@ -48,7 +50,7 @@ def buffer(
                 time.sleep(BUFFER_HANDLER_MISS_SLEEP)
             else:
                 # handler hit
-                ftime = data["ftime"]
+                ftime = data.ftime
                 if tdelta is None:
                     tdelta = ftime - time.time()
 
@@ -88,16 +90,16 @@ def display(frame: np.ndarray, BGR: bool = True) -> None:
 
 
 def dispfps(
-    handler: Generator[dict[str, Any], None, None],
+    handler: Generator[RecvData, None, None],
     n: int = DISPFPS_DEFAULT_N,
     write: bool = False,
-) -> Generator[dict[str, Any], None, None]:
+) -> Generator[RecvData, None, None]:
     """Average iterations per second over last n iterations.
 
     Args:
         handler (generator): Generator that yields data.
         n (int, optional): Number of iterations to average over. Defaults to 100.
-        write (bool, optional): Set to true to write FPS to data['arr'] instead of console,
+        write (bool, optional): Set to true to write FPS to data.arr instead of console,
             assuming it is a video frame. Defaults to False.
 
     Yields:
@@ -111,9 +113,9 @@ def dispfps(
         times.append(end)
         if len(times) > n:
             diff = end - times.popleft()
-            if write:
-                data["arr"] = cv2.putText(
-                    data["arr"],
+            if write and data.arr is not None:
+                data.arr = cv2.putText(
+                    data.arr,
                     f"FPS: {(n / diff):.3f}",
                     FPS_TEXT_POSITION,
                     cv2.FONT_HERSHEY_SIMPLEX,

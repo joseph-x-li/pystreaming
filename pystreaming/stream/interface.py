@@ -1,7 +1,48 @@
-from typing import Any
+import time
+from dataclasses import dataclass
+from typing import Any, TypedDict, cast
 
 import numpy as np
 import zmq
+
+
+class ArrayMetadata(TypedDict):
+    """Metadata for numpy array transmission."""
+
+    dtype: str
+    shape: tuple[int, ...]
+
+
+@dataclass
+class RecvData:
+    """Data structure returned by recv function."""
+
+    meta: Any
+    ftime: float
+    fno: int
+    arr: np.ndarray | None = None
+    buf: bytes | None = None
+
+    def __post_init__(self) -> None:
+        """Validate data structure."""
+        # ftime can be 0.0 for error cases (FRAMEMISS, TRACKMISS), so we don't validate it
+        pass
+
+    def age(self) -> float:
+        """Calculate age of frame in seconds since capture.
+
+        Returns:
+            float: Age in seconds.
+        """
+        return time.time() - self.ftime
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dictionary for unpacking or serialization.
+
+        Returns:
+            dict: Dictionary representation excluding None values.
+        """
+        return {k: v for k, v in self.__dict__.items() if v is not None}
 
 
 def send(
@@ -27,7 +68,7 @@ def send(
             Defaults to 0.
     """
     if arr is not None:
-        md = {"dtype": str(arr.dtype), "shape": arr.shape}
+        md: ArrayMetadata = {"dtype": str(arr.dtype), "shape": arr.shape}
         socket.send_json(md, flags=zmq.SNDMORE | flags)
         socket.send(arr, copy=False, flags=zmq.SNDMORE | flags)
     if buf is not None:
@@ -43,7 +84,7 @@ def recv(
     arr: bool = False,
     buf: bool = False,
     flags: int = 0,
-) -> dict[str, Any]:
+) -> RecvData:
     """Internal video data receive command.
 
     Args:
@@ -53,17 +94,21 @@ def recv(
         flags (int, optional): Zmq flags to execute with (zmq.NOBLOCK). Defaults to 0.
 
     Returns:
-        dict: Expected items, with possible keys: {arr, buf, meta, ftime, fno}.
+        RecvData: Expected items, with possible fields: {arr, buf, meta, ftime, fno}.
     """
-    out = {}
+    arr_data: np.ndarray | None = None
+    buf_data: bytes | None = None
+
     if arr:
-        md = socket.recv_json(flags=flags)
+        md = cast(ArrayMetadata, socket.recv_json(flags=flags))
         msg = socket.recv(copy=False, flags=flags)
-        arrbuf = memoryview(msg)
-        out["arr"] = np.frombuffer(arrbuf, dtype=md["dtype"]).reshape(md["shape"])
+        arrbuf = memoryview(bytes(msg))
+        arr_data = np.frombuffer(arrbuf, dtype=md["dtype"]).reshape(md["shape"])
     if buf:
-        out["buf"] = socket.recv(copy=False, flags=flags)
-    out["meta"] = socket.recv_pyobj(flags=flags)
-    out["ftime"] = socket.recv_pyobj(flags=flags)
-    out["fno"] = socket.recv_pyobj(flags=flags)
-    return out
+        buf_data = bytes(socket.recv(copy=False, flags=flags))
+
+    meta = socket.recv_pyobj(flags=flags)
+    ftime = cast(float, socket.recv_pyobj(flags=flags))
+    fno = cast(int, socket.recv_pyobj(flags=flags))
+
+    return RecvData(meta=meta, ftime=ftime, fno=fno, arr=arr_data, buf=buf_data)

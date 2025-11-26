@@ -28,11 +28,11 @@ def dec_ps(*, shutdown, barrier, infd, outfd, fwdbuf):
                 with contextlib.suppress(zmq.Again):
                     intf.send(
                         socket=out,
-                        fno=data["fno"],
-                        ftime=data["ftime"],
-                        meta=data["meta"],
-                        arr=decoder(data["buf"]),
-                        buf=data["buf"] if fwdbuf else None,
+                        fno=data.fno,
+                        ftime=data.ftime,
+                        meta=data.meta,
+                        arr=decoder(data.buf) if data.buf is not None else None,
+                        buf=data.buf if fwdbuf else None,
                         flags=zmq.NOBLOCK,
                     )
             missing = target - time.time()

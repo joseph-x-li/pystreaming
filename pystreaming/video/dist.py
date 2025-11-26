@@ -5,6 +5,7 @@ import zmq
 
 from ..listlib.circularlist import CircularList, Empty
 from ..stream import interface as intf
+from ..stream.interface import RecvData
 from . import DIST_HWM, DIST_TIMESTEP, FRAMEMISS, TRACKMISS
 from .device import Device
 
@@ -17,7 +18,9 @@ def dist_ps(*, shutdown, barrier, infd, endpoint, tracks):
     distributor = context.socket(zmq.REP)
     distributor.bind(endpoint)
     barrier.wait()
-    queues = {track: CircularList() for track in tracks}
+    queues: dict[str, CircularList[RecvData]] = {
+        track: CircularList[RecvData]() for track in tracks
+    }
     try:
         while not shutdown.is_set():
             target = time.time() + DIST_TIMESTEP
@@ -27,23 +30,29 @@ def dist_ps(*, shutdown, barrier, infd, endpoint, tracks):
                     fqueue.push(data)
             if distributor.poll(0):  # got frame req
                 track = distributor.recv().decode()
-                data = {}
                 try:
                     data = queues[track].pop()
                 except Empty:  # Regular frame miss
-                    data["fno"] = FRAMEMISS
-                    data["ftime"] = None
-                    data["meta"] = None
-                    data["buf"] = b"nil"
+                    data = RecvData(
+                        fno=FRAMEMISS,
+                        ftime=0.0,
+                        meta=None,
+                        buf=b"nil",
+                    )
                 except KeyError:  # Track miss
-                    data["fno"] = TRACKMISS
-                    data["ftime"] = None
-                    data["meta"] = None
-                    data["buf"] = b"nil"
+                    data = RecvData(
+                        fno=TRACKMISS,
+                        ftime=0.0,
+                        meta=None,
+                        buf=b"nil",
+                    )
                 intf.send(
                     socket=distributor,
+                    fno=data.fno,
+                    ftime=data.ftime,
+                    meta=data.meta,
+                    buf=data.buf,
                     flags=zmq.NOBLOCK,
-                    **data,
                 )
             missing = target - time.time()
             if missing > 0:

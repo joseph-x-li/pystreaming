@@ -1,5 +1,6 @@
 import contextlib
 import uuid
+from collections.abc import Generator
 from typing import Any
 
 import numpy as np
@@ -162,29 +163,31 @@ class Worker:
         self.stop()
 
     @property
-    def handler(self):
+    def handler(self) -> Any:  # Returns callable that returns Generator
         """Returns a handler that is used for worker data handling.
 
         Returns:
-            generator: Generator that yields dicts with keys {arr, buf, meta, ftime, fno}.
+            callable: Callable that takes timeout and returns Generator yielding dicts with keys {arr, buf, meta, ftime, fno}.
         """
         return self.decoder.handler
 
-    def send(self, data):
+    def send(self, data: intf.RecvData) -> None:
         """Send processed data to the drain endpoint.
 
         Args:
-            data (dict): Data dictionary with keys {buf, meta, ftime, fno}.
-                The 'arr' key will be removed before sending.
+            data (RecvData): Data structure with fields {buf, meta, ftime, fno}.
+                The 'arr' field should not be present (will be ignored if present).
         """
         if self.drain is None:
             return  # Device has been stopped
-        del data["arr"]
         with contextlib.suppress(zmq.Again):
             intf.send(
                 socket=self.drain,
+                fno=data.fno,
+                ftime=data.ftime,
+                meta=data.meta,
+                buf=data.buf,
                 flags=zmq.NOBLOCK,
-                **data,
             )
 
 
