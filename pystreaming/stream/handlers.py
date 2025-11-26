@@ -36,9 +36,7 @@ def buffer(
     primed_handlers: dict[str, Generator[RecvData | None, None, None]] = {
         k: handlers[k]() for k in handlers
     }
-    buffers: dict[str, OrderedDict[float, RecvData]] = {
-        k: OrderedDict() for k in primed_handlers
-    }
+    buffers: dict[str, OrderedDict[float, RecvData]] = {k: OrderedDict() for k in primed_handlers}
     tdelta: float | None = None
     while True:
         for k, handler in primed_handlers.items():
